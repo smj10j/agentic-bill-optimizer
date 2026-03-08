@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@orbit/shared": ["../../packages/shared/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

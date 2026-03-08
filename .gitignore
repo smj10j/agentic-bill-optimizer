@@ -1,0 +1,32 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.env
+.env.local
+.env.*.local
+*.local
+
+# Build outputs
+apps/web/dist/
+apps/api/dist/
+
+# Cloudflare
+.wrangler/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*

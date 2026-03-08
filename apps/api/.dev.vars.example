@@ -1,0 +1,6 @@
+# Copy this to .dev.vars and fill in your values
+# .dev.vars is git-ignored — never commit real secrets
+
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+JWT_SECRET=a_minimum_32_character_random_secret_string_here
+ENVIRONMENT=development
