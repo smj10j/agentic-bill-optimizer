@@ -71,8 +71,8 @@ export default function AgentPage() {
             const data = line.slice(6);
             if (data === "[DONE]") break;
             try {
-              const parsed = JSON.parse(data) as { delta?: string; content?: string };
-              const delta = parsed.delta ?? parsed.content ?? "";
+              const parsed = JSON.parse(data) as { type: string; content?: string };
+              const delta = parsed.type === "token" ? (parsed.content ?? "") : "";
               if (delta) {
                 setMessages((prev) =>
                   prev.map((m) =>

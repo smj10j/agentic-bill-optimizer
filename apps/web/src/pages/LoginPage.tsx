@@ -28,6 +28,11 @@ export default function LoginPage() {
         return;
       }
 
+      if (!res.data?.tokens || !res.data?.user) {
+        setError("Invalid response from server. Please try again.");
+        return;
+      }
+
       login(res.data.tokens, res.data.user);
       navigate({ to: "/dashboard" });
     } catch {

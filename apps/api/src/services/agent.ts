@@ -148,11 +148,17 @@ export async function* streamAgentResponse(
           currentToolUse.inputJson += event.delta.partial_json;
         }
       } else if (event.type === "content_block_stop" && currentToolUse) {
+        let toolInput: Record<string, unknown> = {};
+        try {
+          toolInput = JSON.parse(currentToolUse.inputJson || "{}") as Record<string, unknown>;
+        } catch {
+          // Malformed JSON from a truncated stream — proceed with empty input
+        }
         toolUseBlocks.push({
           type: "tool_use",
           id: currentToolUse.id,
           name: currentToolUse.name,
-          input: JSON.parse(currentToolUse.inputJson || "{}") as Record<string, unknown>,
+          input: toolInput,
         });
         currentToolUse = null;
       } else if (event.type === "message_delta") {
@@ -221,7 +227,7 @@ async function executeTool(
         .filter((s) => s.status !== "cancelled")
         .reduce((sum, s) => {
           if (s.billingCycle === "annual") return sum + Math.round(s.amountCents / 12);
-          if (s.billingCycle === "weekly") return sum + s.amountCents * 4;
+          if (s.billingCycle === "weekly") return sum + Math.round(s.amountCents * 52 / 12);
           return sum + s.amountCents;
         }, 0);
 
@@ -251,7 +257,7 @@ async function executeTool(
           amount: formatCents(b.amountCents),
           due: new Date(b.dueAt * 1000).toLocaleDateString(),
           status: b.status,
-          daysUntilDue: Math.ceil((b.dueAt - Date.now() / 1000) / 86400),
+          daysUntilDue: Math.ceil((b.dueAt - Math.floor(Date.now() / 1000)) / 86400),
         })),
       };
     }
