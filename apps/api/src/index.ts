@@ -10,6 +10,7 @@ import { subscriptionsRouter } from "./routes/subscriptions.js";
 import { billsRouter } from "./routes/bills.js";
 import { yieldRouter } from "./routes/yield.js";
 import { agentRouter } from "./routes/agent.js";
+import { autopilotRouter } from "./routes/autopilot.js";
 import type { Env } from "./types/env.js";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -27,7 +28,7 @@ app.use(
       return allowed.includes(origin) ? origin : allowed[0];
     },
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     maxAge: 86400,
   })
 );
@@ -49,6 +50,7 @@ app.route("/api/v1/subscriptions", subscriptionsRouter);
 app.route("/api/v1/bills", billsRouter);
 app.route("/api/v1/yield", yieldRouter);
 app.route("/api/v1/agent", agentRouter);
+app.route("/api/v1/autopilot", autopilotRouter);
 
 // ── Fallbacks ─────────────────────────────────────────────────────────────────
 

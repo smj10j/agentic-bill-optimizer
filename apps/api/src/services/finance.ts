@@ -284,15 +284,39 @@ export async function insertAgentAction(
     actionType: string;
     description: string;
     payload: Record<string, unknown>;
+    approvalStatus?: "auto_approved" | "pending" | "approved" | "rejected";
+    riskLevel?: "low" | "medium" | "high" | "critical";
+    amountCents?: number;
+    reasoning?: string;
   }
 ): Promise<string> {
   const id = generateId("act");
   const now = Math.floor(Date.now() / 1000);
+  const undoExpiresAt = now + 24 * 60 * 60; // 24-hour undo window
+  const approvalStatus = action.approvalStatus ?? "auto_approved";
+  const status = approvalStatus === "pending" ? "pending" : "completed";
+
   await db
     .prepare(
-      "INSERT INTO agent_actions (id, user_id, action_type, description, payload, status, created_at) VALUES (?, ?, ?, ?, ?, 'completed', ?)"
+      `INSERT INTO agent_actions
+        (id, user_id, action_type, description, payload, status,
+         approval_status, risk_level, amount_cents, reasoning, undo_expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, action.userId, action.actionType, action.description, JSON.stringify(action.payload), now)
+    .bind(
+      id,
+      action.userId,
+      action.actionType,
+      action.description,
+      JSON.stringify(action.payload),
+      status,
+      approvalStatus,
+      action.riskLevel ?? "low",
+      action.amountCents ?? 0,
+      action.reasoning ?? "",
+      undoExpiresAt,
+      now
+    )
     .run();
   return id;
 }
@@ -324,14 +348,68 @@ export async function reverseAgentAction(
   userId: string
 ): Promise<boolean> {
   const now = Math.floor(Date.now() / 1000);
-  const GRACE_PERIOD = 15 * 60; // 15 minutes
-  const cutoff = now - GRACE_PERIOD;
-
+  // Use undo_expires_at if set (24h window), fallback to checking created_at + 24h
   const result = await db
     .prepare(
-      "UPDATE agent_actions SET status = 'reversed', reversed_at = ? WHERE id = ? AND user_id = ? AND status = 'completed' AND created_at >= ?"
+      `UPDATE agent_actions SET status = 'reversed', reversed_at = ?
+       WHERE id = ? AND user_id = ? AND status = 'completed'
+         AND (undo_expires_at IS NULL OR undo_expires_at > ?)
+         AND (undo_expires_at IS NOT NULL OR created_at >= ?)`
     )
-    .bind(now, id, userId, cutoff)
+    .bind(now, id, userId, now, now - 24 * 60 * 60)
+    .run();
+  return result.meta.changes > 0;
+}
+
+export async function getPendingActions(
+  db: D1Database,
+  userId: string
+): Promise<Array<{ id: string; actionType: string; description: string; amountCents: number; reasoning: string; riskLevel: string; approvalExpiresAt: number | null; createdAt: number }>> {
+  const rows = await db
+    .prepare(
+      `SELECT id, action_type, description, amount_cents, reasoning, risk_level,
+              approval_expires_at, created_at
+       FROM agent_actions
+       WHERE user_id = ? AND approval_status = 'pending' AND status = 'pending'
+       ORDER BY created_at DESC`
+    )
+    .bind(userId)
+    .all<{ id: string; action_type: string; description: string; amount_cents: number; reasoning: string; risk_level: string; approval_expires_at: number | null; created_at: number }>();
+
+  return rows.results.map((r) => ({
+    id: r.id,
+    actionType: r.action_type,
+    description: r.description,
+    amountCents: r.amount_cents,
+    reasoning: r.reasoning,
+    riskLevel: r.risk_level,
+    approvalExpiresAt: r.approval_expires_at,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function approveAction(db: D1Database, id: string, userId: string): Promise<boolean> {
+  const now = Math.floor(Date.now() / 1000);
+  const undoExpiresAt = now + 24 * 60 * 60;
+  const result = await db
+    .prepare(
+      `UPDATE agent_actions
+       SET approval_status = 'approved', status = 'completed', undo_expires_at = ?
+       WHERE id = ? AND user_id = ? AND approval_status = 'pending'`
+    )
+    .bind(undoExpiresAt, id, userId)
+    .run();
+  return result.meta.changes > 0;
+}
+
+export async function rejectAction(db: D1Database, id: string, userId: string): Promise<boolean> {
+  const result = await db
+    .prepare(
+      `UPDATE agent_actions
+       SET approval_status = 'rejected', status = 'reversed'
+       WHERE id = ? AND user_id = ? AND approval_status = 'pending'`
+    )
+    .bind(id, userId)
     .run();
   return result.meta.changes > 0;
 }

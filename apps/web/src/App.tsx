@@ -15,6 +15,7 @@ import AgentPage from "./pages/AgentPage";
 import BillsPage from "./pages/BillsPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import YieldPage from "./pages/YieldPage";
+import AutopilotPage from "./pages/AutopilotPage";
 
 // ─── Root route ──────────────────────────────────────────────────────────────
 
@@ -111,6 +112,12 @@ const yieldRoute = createRoute({
   component: YieldPage,
 });
 
+const autopilotRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/autopilot",
+  component: AutopilotPage,
+});
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 const routeTree = rootRoute.addChildren([
@@ -123,6 +130,7 @@ const routeTree = rootRoute.addChildren([
     billsRoute,
     subscriptionsRoute,
     yieldRoute,
+    autopilotRoute,
   ]),
 ]);
 

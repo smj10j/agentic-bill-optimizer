@@ -391,6 +391,132 @@ Move funds from yield back to checking.
 
 ---
 
+## Autopilot
+
+All endpoints require `Authorization: Bearer <token>`.
+
+### GET /autopilot/settings
+Returns the current user's autopilot configuration. Creates default settings on first call.
+
+**Response**
+```json
+{
+  "data": {
+    "id": "apt_abc123",
+    "userId": "usr_xyz",
+    "enabled": false,
+    "tier": 0,
+    "dailyLimitCents": 50000,
+    "singleActionLimitCents": 20000,
+    "nightFreezeEnabled": false,
+    "nightFreezeStartHour": 22,
+    "nightFreezeEndHour": 8,
+    "billPaymentLimitCents": 50000,
+    "yieldSweepInLimitCents": 100000,
+    "yieldSweepOutLimitCents": 50000,
+    "requireApprovalSubscriptionCancel": true,
+    "alwaysAutopay": [],
+    "neverAutopay": [],
+    "createdAt": 1709100000,
+    "updatedAt": 1709100000
+  },
+  "error": null
+}
+```
+
+---
+
+### PUT /autopilot/settings
+Partial update of autopilot settings. All fields optional.
+
+**Body** (all fields optional)
+```json
+{
+  "enabled": true,
+  "tier": 1,
+  "dailyLimitCents": 50000,
+  "singleActionLimitCents": 20000,
+  "nightFreezeEnabled": false,
+  "nightFreezeStartHour": 22,
+  "nightFreezeEndHour": 8,
+  "billPaymentLimitCents": 50000,
+  "yieldSweepInLimitCents": 100000,
+  "yieldSweepOutLimitCents": 50000,
+  "requireApprovalSubscriptionCancel": true,
+  "alwaysAutopay": ["Netflix"],
+  "neverAutopay": ["Mortgage Co"]
+}
+```
+
+**Tiers**: `0` = Suggestions Only, `1` = Notify & Do, `2` = Supervised Autopilot, `3` = Full Autopilot
+
+**Limits**: `dailyLimitCents` max 500000 ($5,000), `singleActionLimitCents` max 200000 ($2,000)
+
+---
+
+### GET /autopilot/trust-score
+Returns the user's computed trust score based on their undo rate over 30 days.
+
+**Response**
+```json
+{
+  "data": {
+    "score": 70,
+    "label": "Getting started",
+    "undoRate": 0,
+    "totalActions": 0,
+    "undoneActions": 0
+  },
+  "error": null
+}
+```
+
+**Score labels**: 90–100 → "Highly trusted", 75–89 → "Trusted for routine bills", 60–74 → "Building trust", 40–59 → "Limited trust", <40 → "Low trust — review recent actions", 0 actions → "Getting started"
+
+---
+
+### GET /autopilot/actions/pending
+Returns agent actions awaiting user approval.
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "id": "act_abc123",
+      "actionType": "subscription_cancel",
+      "description": "Cancel Netflix subscription",
+      "amountCents": 1599,
+      "reasoning": "No usage detected in 45 days",
+      "riskLevel": "medium",
+      "approvalExpiresAt": 1709186400,
+      "createdAt": 1709100000
+    }
+  ],
+  "error": null
+}
+```
+
+---
+
+### POST /autopilot/actions/:id/approve
+Approve a pending agent action. Sets status to `approved` and starts a 24-hour undo window.
+
+**Response**: `{ "data": { "approved": true }, "error": null }`
+
+**Errors**: `404` if action not found or already resolved.
+
+---
+
+### POST /autopilot/actions/:id/reject
+Reject a pending agent action. Sets status to `rejected` (no further execution).
+
+**Response**: `{ "data": { "rejected": true }, "error": null }`
+
+**Errors**: `404` if action not found or already resolved.
+
+---
+
 ## Health
 
 ### GET /health

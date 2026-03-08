@@ -6,6 +6,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { D1Database } from "@cloudflare/workers-types";
 import * as finance from "./finance.js";
+import * as autopilot from "./autopilot.js";
 import { formatCents, formatApyBasisPoints, monthlyYieldCents } from "@orbit/shared";
 
 const MODEL = "claude-sonnet-4-6";
@@ -302,7 +303,25 @@ async function executeTool(
     case "flag_subscription": {
       const { subscriptionId, reason } = input as { subscriptionId: string; reason: string };
       if (typeof subscriptionId !== "string") return { error: "subscriptionId required" };
+
+      // Evaluate guardrails (flagging is low-risk; logging for audit trail)
+      const evaluation = await autopilot.evaluateAction(db, userId, "subscription_flag", 0);
+
       const updated = await finance.updateSubscriptionStatus(db, subscriptionId, userId, "flagged");
+
+      if (updated) {
+        await finance.insertAgentAction(db, {
+          userId,
+          actionType: "subscription_flag",
+          description: `Flagged subscription for review: ${reason}`,
+          payload: { subscriptionId, reason },
+          approvalStatus: evaluation.decision === "auto_approved" ? "auto_approved" : "pending",
+          riskLevel: evaluation.riskLevel,
+          amountCents: 0,
+          reasoning: reason,
+        });
+      }
+
       return { flagged: updated, reason };
     }
 

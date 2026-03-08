@@ -74,6 +74,47 @@ Current implementation tasks, updated as work progresses.
 
 ---
 
+## Sprint 2: PRD-002 — Autopilot Mode ✅ COMPLETE
+
+### DB / Migration
+- [x] `0002_autopilot.sql` — `autopilot_settings` table + `agent_actions` extensions
+- [x] Apply migration local D1
+- [x] Apply migration remote D1
+
+### Shared Types
+- [x] `AutopilotTier`, `AutopilotSettings`, `ActionRiskLevel`, `ActionApprovalStatus`
+- [x] Extend `AgentAction` with new fields
+
+### Backend — Service
+- [x] `services/autopilot.ts`: getSettings, updateSettings, evaluateAction, calculateTrustScore
+- [x] Update `finance.ts`: insertAgentAction accepts new fields, reverseAgentAction uses 24h window
+- [x] `finance.ts`: getPendingActions, approveAction, rejectAction
+
+### Backend — Route
+- [x] `routes/autopilot.ts`: GET/PUT settings, GET trust-score, GET/POST pending actions
+- [x] Register in index.ts
+
+### Backend — Agent integration
+- [x] Wire evaluateAction into agent tool execution
+- [x] Pass approval_status + risk_level when inserting actions
+
+### Frontend
+- [x] `lib/autopilot.ts` — typed API client
+- [x] `pages/AutopilotPage.tsx` — tier selector, sliders, trust score, pending count
+- [x] Add `/autopilot` route to TanStack Router + nav link
+
+### Tests
+- [x] evaluateAction guardrail tests (16 tests passing)
+- [x] calculateTrustScore / getTrustLabel tests
+
+### Docs + Deploy
+- [x] Update PRD-002 status → Implemented
+- [x] Update API.md with autopilot endpoints
+- [x] Deploy + validate
+- [x] Commit + push
+
+---
+
 ## Sprint 2: Backlog
 
 ### Auth & UX

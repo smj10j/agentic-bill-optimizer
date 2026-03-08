@@ -3,7 +3,7 @@ import type { ApiResponse } from "@orbit/shared";
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api/v1";
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   token?: string;
 };

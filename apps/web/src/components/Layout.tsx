@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/bills", label: "Bills", icon: "📋" },
   { to: "/subscriptions", label: "Subscriptions", icon: "🔄" },
   { to: "/yield", label: "Yield", icon: "📈" },
+  { to: "/autopilot", label: "Autopilot", icon: "✈️" },
 ];
 
 function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
