@@ -20,12 +20,12 @@ All product requirements documents tracked here. Update status as PRDs move thro
 | ID | Title | Status | Last Updated | Notes |
 |---|---|---|---|---|
 | [PRD-001](./PRD-001-mvp-foundation.md) | MVP Foundation | `Implemented` | 2026-03-08 | Phase 1 complete and deployed. Phase 2 (autopilot, real integrations) in backlog. |
-| [PRD-002](./PRD-002-autopilot-mode.md) | Autopilot Mode & Agent Autonomy | `Draft` | 2026-03-08 | P0 — Progressive trust model for agent autonomy |
-| [PRD-003](./PRD-003-smart-bill-pay.md) | Smart Bill Pay Timing | `Draft` | 2026-03-08 | P0 — Optimize bill payment timing for yield and cash flow |
-| [PRD-004](./PRD-004-approval-undo-framework.md) | Action Approval & Undo Framework | `Draft` | 2026-03-08 | P0 — Consistent approval workflows and action reversal |
-| [PRD-005](./PRD-005-real-account-linking.md) | Real Account Linking | `Draft` | 2026-03-08 | P0 — Connect to real bank accounts via Plaid or equivalent |
-| [PRD-006](./PRD-006-notifications-alerts.md) | Push Notifications & Alerts | `Draft` | 2026-03-08 | P0 — Proactive push and email notifications |
-| [PRD-007](./PRD-007-proactive-insights.md) | Proactive Agent Insights | `Draft` | 2026-03-08 | P0 — Agent-initiated insights and recommendations |
+| [PRD-002](./PRD-002-autopilot-mode.md) | Autopilot Mode & Agent Autonomy | `In Review` | 2026-03-08 | P0 — Progressive trust model; tiered autonomy; guardrails; trust score |
+| [PRD-003](./PRD-003-smart-bill-pay.md) | Smart Bill Pay Timing | `In Review` | 2026-03-08 | P0 — Yield-aware scheduling; grace periods; cash flow conflict resolution |
+| [PRD-004](./PRD-004-approval-undo-framework.md) | Action Approval & Undo Framework | `In Review` | 2026-03-08 | P0 — Action state machine; undo windows; step-up auth; audit trail |
+| [PRD-005](./PRD-005-real-account-linking.md) | Real Account Linking | `In Review` | 2026-03-08 | P0 — Plaid integration; webhook sync; connection health; data governance |
+| [PRD-006](./PRD-006-notifications-alerts.md) | Push Notifications & Alerts | `In Review` | 2026-03-08 | P0 — Web push + email; taxonomy; smart timing; anti-fatigue rules |
+| [PRD-007](./PRD-007-proactive-insights.md) | Proactive Agent Insights | `In Review` | 2026-03-08 | P0 — Hybrid detection+Claude pipeline; insight catalog; relevance scoring |
 | [PRD-008](./PRD-008-bill-negotiation.md) | Bill Negotiation Agent | `Draft` | 2026-03-08 | P1 — Automated bill negotiation for lower rates |
 | [PRD-009](./PRD-009-subscription-cancellation.md) | Subscription Cancellation Agent | `Draft` | 2026-03-08 | P1 — Agent handles full cancellation flow |
 | [PRD-010](./PRD-010-yield-optimization.md) | Yield Optimization Engine | `Draft` | 2026-03-08 | P1 — Auto-allocate idle cash to yield-bearing positions |
