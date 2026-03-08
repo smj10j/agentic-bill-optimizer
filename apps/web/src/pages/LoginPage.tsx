@@ -2,7 +2,7 @@ import { useState, FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../store/auth";
-import type { AuthTokens, User } from "@orbit/shared";
+import type { User } from "@orbit/shared";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await apiFetch<{ tokens: AuthTokens; user: User }>("/auth/login", {
+      const res = await apiFetch<{ user: User; accessToken: string; refreshToken: string }>("/auth/login", {
         method: "POST",
         body: { email, password },
       });
@@ -28,7 +28,8 @@ export default function LoginPage() {
         return;
       }
 
-      login(res.data.tokens, res.data.user);
+      const { user, accessToken, refreshToken } = res.data;
+      login({ accessToken, refreshToken }, user);
       navigate({ to: "/dashboard" });
     } catch {
       setError("Something went wrong. Please try again.");
