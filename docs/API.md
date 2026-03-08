@@ -391,6 +391,54 @@ Move funds from yield back to checking.
 
 ---
 
+## Dashboard
+
+All endpoints require `Authorization: Bearer <token>`.
+
+### GET /dashboard/summary
+Single aggregate endpoint for the home screen. Returns all data needed to render the dashboard in one request.
+
+**Response**
+```json
+{
+  "data": {
+    "balanceSummary": {
+      "checkingSavingsCents": 324700,
+      "yieldCents": 158500,
+      "totalCents": 483200,
+      "lastSyncedAt": 1709100000,
+      "accounts": [{ "id": "...", "name": "Chase Checking", "balanceCents": 324700, "accountType": "checking", ... }]
+    },
+    "pendingActions": [],
+    "autopilot": {
+      "enabled": true,
+      "tier": 1,
+      "actionsThisWeek": 3
+    },
+    "upcomingBills": [{ "id": "...", "name": "Electric", "amountCents": 8700, "dueAt": 1709200000, "status": "pending", ... }],
+    "overdueBills": [],
+    "yieldSnapshot": {
+      "balanceCents": 158500,
+      "apyBasisPoints": 450,
+      "totalEarnedCents": 1240,
+      "monthlyEarningCents": 594,
+      "weeklyEarningCents": 137
+    },
+    "recentActivity": [{ "id": "...", "actionType": "flag_subscription", "description": "...", "status": "completed", "createdAt": 1709100000, "reversedAt": null }],
+    "flaggedSubscriptions": []
+  },
+  "error": null
+}
+```
+
+**Notes**:
+- `upcomingBills`: bills with `status=pending` due within the next 7 days
+- `overdueBills`: bills with `status=pending` and `dueAt` in the past
+- `recentActivity`: last 5 agent actions, newest first
+- `yieldSnapshot.monthlyEarningCents` / `weeklyEarningCents`: estimated from APY × balance
+
+---
+
 ## Autopilot
 
 All endpoints require `Authorization: Bearer <token>`.

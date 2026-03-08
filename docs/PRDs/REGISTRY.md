@@ -60,7 +60,7 @@ All product requirements documents tracked here. Update status as PRDs move thro
 | [PRD-039](./PRD-039-credit-monitoring.md) | Credit Score Monitoring | `Draft` | 2026-03-08 | P3 — Continuous score tracking with AI improvement recs |
 | [PRD-040](./PRD-040-developer-api.md) | Developer API & Webhooks | `Draft` | 2026-03-08 | P3 — Open API for third-party integrations |
 | [PRD-041](./PRD-041-annual-report.md) | Annual Financial Report | `Draft` | 2026-03-08 | P3 — Spotify Wrapped-style year-end financial summary |
-| [PRD-042](./PRD-042-dashboard-home-experience.md) | Dashboard & Home Experience | `In Review` | 2026-03-08 | P0 — Unified home screen post-P0 features; action queue; insights; bill timeline |
+| [PRD-042](./PRD-042-dashboard-home-experience.md) | Dashboard & Home Experience | `Implemented` | 2026-03-08 | Full dashboard: balance bar, action queue, autopilot card, bills, yield, activity — deployed |
 | [PRD-043](./PRD-043-first-run-demo-mode.md) | First-Run Experience & Demo Mode | `In Review` | 2026-03-08 | P0 — Guided onboarding; rich demo persona ("Alex"); real→demo toggle |
 | [PRD-044](./PRD-044-settings-configuration-hub.md) | Settings & Configuration Hub | `In Review` | 2026-03-08 | P0 — Cohesive home for autopilot, accounts, notifications, profile, intelligence |
 | [PRD-045](./PRD-045-bill-payment-execution.md) | Bill Payment Execution & Money Movement | `In Review` | 2026-03-08 | P0 — Simulated (Phase 1) and real ACH (Phase 2) payment lifecycle |

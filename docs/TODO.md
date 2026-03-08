@@ -115,6 +115,32 @@ Current implementation tasks, updated as work progresses.
 
 ---
 
+## Sprint 2: PRD-042 — Dashboard & Home Experience ✅ COMPLETE
+
+### Backend
+- [x] `routes/dashboard.ts`: GET /dashboard/summary aggregate endpoint
+- [x] Register in index.ts
+
+### Frontend
+- [x] `lib/dashboard.ts` — typed API client + DashboardSummary type
+- [x] Rewrite `DashboardPage.tsx`:
+  - [x] Net Worth Bar (real account + yield data)
+  - [x] Action Required cards (pending approval actions + overdue bills)
+  - [x] Autopilot Status card (enabled state, tier, actions this week)
+  - [x] Upcoming Bills (next 7 days, pending only)
+  - [x] Yield Snapshot (APY, balance, earnings)
+  - [x] Recent Activity (last 5 agent actions)
+  - [x] Flagged subscriptions banner
+- [x] Loading skeleton + error state + refresh button
+
+### Docs + Deploy
+- [x] Update PRD-042 status → Implemented
+- [x] Update API.md with dashboard/summary endpoint
+- [x] Deploy + validate
+- [x] Commit + push
+
+---
+
 ## Sprint 2: Backlog
 
 ### Auth & UX
