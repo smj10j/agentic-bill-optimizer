@@ -4,6 +4,12 @@ import { HTTPException } from "hono/http-exception";
 import { err } from "./lib/response.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./routes/auth.js";
+import { accountsRouter } from "./routes/accounts.js";
+import { transactionsRouter } from "./routes/transactions.js";
+import { subscriptionsRouter } from "./routes/subscriptions.js";
+import { billsRouter } from "./routes/bills.js";
+import { yieldRouter } from "./routes/yield.js";
+import { agentRouter } from "./routes/agent.js";
 import type { Env } from "./types/env.js";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -16,7 +22,7 @@ app.use(
     origin: (origin) => {
       const allowed = [
         "http://localhost:5173",
-        "https://orbit.pages.dev", // Update with real domain
+        "https://orbit-app-c97.pages.dev",
       ];
       return allowed.includes(origin) ? origin : allowed[0];
     },
@@ -26,7 +32,6 @@ app.use(
   })
 );
 
-// Security headers
 app.use("*", async (c, next) => {
   await next();
   c.header("X-Content-Type-Options", "nosniff");
@@ -38,18 +43,23 @@ app.use("*", async (c, next) => {
 
 app.route("/health", healthRouter);
 app.route("/api/v1/auth", authRouter);
+app.route("/api/v1/accounts", accountsRouter);
+app.route("/api/v1/transactions", transactionsRouter);
+app.route("/api/v1/subscriptions", subscriptionsRouter);
+app.route("/api/v1/bills", billsRouter);
+app.route("/api/v1/yield", yieldRouter);
+app.route("/api/v1/agent", agentRouter);
 
-// 404 catch-all
+// ── Fallbacks ─────────────────────────────────────────────────────────────────
+
 app.notFound((c) => {
   return c.json(err("NOT_FOUND", "The requested resource does not exist"), 404);
 });
 
-// Global error handler
 app.onError((error, c) => {
   if (error instanceof HTTPException) {
     return c.json(err("REQUEST_ERROR", error.message), error.status);
   }
-
   console.error("Unhandled error:", error);
   return c.json(err("INTERNAL_ERROR", "An unexpected error occurred"), 500);
 });

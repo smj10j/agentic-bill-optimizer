@@ -14,7 +14,7 @@ For every feature or fix, follow this loop **in order**:
 5. **Deploy** — Run `npm run deploy` from the relevant workspace. See deployment instructions in `README.md`.
 6. **Validate deployment** — Hit deployed endpoints / open deployed URL. Verify the feature works in production.
 7. **Update TODO** — Mark remaining items complete. Note anything deferred.
-8. **Update docs** — Update any impacted docs: `README.md` (new setup/deploy steps), `docs/TDD.md` (new system integrations), `docs/PRD.md` (feature status), `docs/API.md` (new endpoints).
+8. **Update docs** — Update any impacted docs: `README.md` (new setup/deploy steps), `docs/TDD.md` (new system integrations), `docs/PRDs/REGISTRY.md` + relevant PRD status, `docs/API.md` (new endpoints).
 9. **Commit and push** — Commit with a meaningful message. Push to `main`. CI/CD handles the rest.
 
 ## Parallelization

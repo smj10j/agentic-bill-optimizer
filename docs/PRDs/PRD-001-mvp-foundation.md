@@ -1,7 +1,8 @@
-# Product Requirements Document — Orbit
+# PRD-001 — MVP Foundation
 
-**Version**: 0.1 (MVP Draft)
-**Status**: 🟡 In Progress
+**Version**: 0.2
+**Status**: 🟢 Implemented (Phase 1 complete, Phase 2 in backlog)
+**Registry**: [REGISTRY.md](./REGISTRY.md)
 
 ---
 

@@ -1,29 +1,145 @@
-// Placeholder App shell — routes and screens will be added in subsequent iterations
+import {
+  createRouter,
+  createRoute,
+  createRootRoute,
+  RouterProvider,
+  redirect,
+  Outlet,
+} from "@tanstack/react-router";
+import { AuthProvider } from "./store/auth";
+import Layout from "./components/Layout";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import DashboardPage from "./pages/DashboardPage";
+import AgentPage from "./pages/AgentPage";
+import BillsPage from "./pages/BillsPage";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import YieldPage from "./pages/YieldPage";
+
+// ─── Root route ──────────────────────────────────────────────────────────────
+
+const rootRoute = createRootRoute({
+  component: RootComponent,
+});
+
+function RootComponent() {
+  return <Outlet />;
+}
+
+// ─── Public routes ────────────────────────────────────────────────────────────
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  component: LoginPage,
+});
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/signup",
+  component: SignupPage,
+});
+
+// ─── Protected layout route ───────────────────────────────────────────────────
+
+const protectedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "protected",
+  beforeLoad: () => {
+    const raw = localStorage.getItem("orbit_auth");
+    if (!raw) throw redirect({ to: "/login" });
+    try {
+      const parsed = JSON.parse(raw) as { accessToken?: string };
+      if (!parsed.accessToken) throw redirect({ to: "/login" });
+    } catch (err) {
+      // If redirect, rethrow; otherwise redirect
+      if (err instanceof Response || (err && typeof err === "object" && "to" in err)) throw err;
+      throw redirect({ to: "/login" });
+    }
+  },
+  component: ProtectedLayout,
+});
+
+function ProtectedLayout() {
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+}
+
+// ─── Index redirect ───────────────────────────────────────────────────────────
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard" });
+  },
+  component: () => null,
+});
+
+// ─── Protected pages ──────────────────────────────────────────────────────────
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/dashboard",
+  component: DashboardPage,
+});
+
+const agentRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/agent",
+  component: AgentPage,
+});
+
+const billsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/bills",
+  component: BillsPage,
+});
+
+const subscriptionsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/subscriptions",
+  component: SubscriptionsPage,
+});
+
+const yieldRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/yield",
+  component: YieldPage,
+});
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  loginRoute,
+  signupRoute,
+  protectedRoute.addChildren([
+    dashboardRoute,
+    agentRoute,
+    billsRoute,
+    subscriptionsRoute,
+    yieldRoute,
+  ]),
+]);
+
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      <div className="text-center space-y-4 max-w-md">
-        {/* Logo mark */}
-        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto">
-          <span className="text-white text-2xl font-bold">O</span>
-        </div>
-
-        <h1 className="text-3xl font-bold text-gray-900">Orbit</h1>
-        <p className="text-gray-500 text-lg">Your money, on autopilot.</p>
-
-        <div className="pt-4 space-y-2">
-          <button className="w-full bg-blue-600 text-white rounded-lg py-3 px-6 font-medium hover:bg-blue-700 transition-colors">
-            Get started
-          </button>
-          <button className="w-full border border-gray-200 text-gray-700 rounded-lg py-3 px-6 font-medium hover:bg-gray-50 transition-colors">
-            Sign in
-          </button>
-        </div>
-
-        <p className="text-xs text-gray-400 pt-4">
-          MVP scaffold — implementation in progress
-        </p>
-      </div>
-    </div>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   );
 }

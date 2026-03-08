@@ -2,6 +2,8 @@ name = "orbit-api"
 main = "src/index.ts"
 compatibility_date = "2026-03-07"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+preview_urls = false
 
 [vars]
 ENVIRONMENT = "production"
@@ -10,13 +12,13 @@ ENVIRONMENT = "production"
 [[d1_databases]]
 binding = "DB"
 database_name = "orbit-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "abdc8803-f3ea-4f60-a5fa-dbcae58f4c18"
 migrations_dir = "migrations"
 
 # ── KV Namespaces ─────────────────────────────────────────────────────────────
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "94e21f34fd9841e2a179f097be10bfee"
 
 # ── Development overrides ──────────────────────────────────────────────────────
 [env.development]

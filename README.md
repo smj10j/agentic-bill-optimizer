@@ -6,7 +6,12 @@ Orbit analyzes your financial life, manages bills, hunts down better deals, trac
 
 ## Status
 
-🚧 MVP in progress
+🟢 MVP deployed
+
+| | URL |
+|---|---|
+| **Web** | https://orbit-app-c97.pages.dev |
+| **API** | https://orbit-api.stevej-67b.workers.dev |
 
 ## Tech Stack
 
@@ -96,35 +101,30 @@ npm run typecheck
 
 ## Deployment
 
-### First-Time Setup
+### Infrastructure (already provisioned)
+
+Cloudflare resources are already set up:
+- **D1 database**: `orbit-db` (id: `abdc8803-f3ea-4f60-a5fa-dbcae58f4c18`)
+- **KV namespace**: `SESSIONS` (id: `94e21f34fd9841e2a179f097be10bfee`)
+- **Workers**: `orbit-api` at `https://orbit-api.stevej-67b.workers.dev`
+- **Pages**: `orbit-app` at `https://orbit-app-c97.pages.dev`
+- **JWT_SECRET**: Set as Worker secret
+
+### First-Time Setup (new developers)
 
 1. Log in to Cloudflare: `wrangler login`
 
-2. Create D1 database:
+2. The `wrangler.toml` already has the D1 and KV IDs. Apply the schema locally:
    ```bash
    cd apps/api
-   wrangler d1 create orbit-db
-   ```
-   Copy the `database_id` into `apps/api/wrangler.toml`.
-
-3. Create KV namespace:
-   ```bash
-   wrangler kv:namespace create SESSIONS
-   ```
-   Copy the `id` into `apps/api/wrangler.toml`.
-
-4. Set production secrets:
-   ```bash
-   wrangler secret put ANTHROPIC_API_KEY
-   wrangler secret put JWT_SECRET
+   wrangler d1 migrations apply orbit-db --local
    ```
 
-5. Create Cloudflare Pages project (web):
-   - Go to Cloudflare Dashboard → Pages → Create a project
-   - Connect to your GitHub repo
-   - Build command: `npm run build --workspace=apps/web`
-   - Output directory: `apps/web/dist`
-   - Root directory: `/` (monorepo root)
+3. Set your local dev secrets in `apps/api/.dev.vars` (copy from `.dev.vars.example`):
+   ```
+   ANTHROPIC_API_KEY=your_key
+   JWT_SECRET=any_random_string_for_local_dev
+   ```
 
 ### Deploy
 
@@ -147,7 +147,8 @@ See `.github/workflows/` for details.
 
 | Doc | Description |
 |---|---|
-| [PRD](docs/PRD.md) | Product requirements and feature status |
+| [PRD Registry](docs/PRDs/REGISTRY.md) | All PRDs and their status |
+| [PRD-001 MVP Foundation](docs/PRDs/PRD-001-mvp-foundation.md) | MVP feature requirements |
 | [TDD](docs/TDD.md) | Technical design and architecture |
 | [API](docs/API.md) | API reference |
 | [Security](docs/SECURITY.md) | Security model and practices |
