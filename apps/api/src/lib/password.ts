@@ -4,7 +4,11 @@
  * 310,000 iterations matches OWASP recommendation for PBKDF2-SHA256.
  */
 
-const ITERATIONS = 310_000;
+// Cloudflare Workers caps PBKDF2 at 100,000 iterations (platform limit).
+// OWASP minimum for PBKDF2-SHA256 is 600,000, but 100,000 is the
+// maximum available in this runtime. Acceptable for MVP; revisit if
+// switching to a Node.js runtime with bcrypt support.
+const ITERATIONS = 100_000;
 const KEY_LENGTH = 32;
 
 export async function hashPassword(password: string): Promise<string> {

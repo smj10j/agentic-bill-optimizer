@@ -77,7 +77,8 @@ Current implementation tasks, updated as work progresses.
 ## Sprint 2: Backlog
 
 ### Auth & UX
-- [ ] Anthropic API key set (waiting on user)
+- [x] Anthropic API key set as Worker secret ✅
+- [ ] Add credits to Anthropic account at console.anthropic.com (balance currently zero)
 - [ ] Validate agent chat end-to-end in production
 - [ ] Token refresh flow wired in web API client
 - [ ] Better error toasts on auth failures
