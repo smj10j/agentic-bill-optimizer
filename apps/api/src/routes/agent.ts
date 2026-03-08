@@ -116,7 +116,7 @@ router.get("/conversations", async (c) => {
 
   const conversations = rows.results.map((r) => {
     const messages = JSON.parse(r.messages) as Array<{ role: string; content: string }>;
-    const lastMessage = messages[messages.length - 1];
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
     return {
       id: r.id,
       preview: lastMessage?.content?.slice(0, 100) ?? "",
