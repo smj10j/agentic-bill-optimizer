@@ -352,22 +352,54 @@ export async function insertAgentAction(
   return id;
 }
 
+export type AgentActionRecord = {
+  id: string;
+  actionType: string;
+  description: string;
+  status: string;
+  approvalStatus: string;
+  riskLevel: string;
+  amountCents: number;
+  reasoning: string;
+  undoExpiresAt: number | null;
+  approvalExpiresAt: number | null;
+  createdAt: number;
+  reversedAt: number | null;
+};
+
 export async function getAgentActions(
   db: D1Database,
-  userId: string
-): Promise<Array<{ id: string; actionType: string; description: string; status: string; createdAt: number; reversedAt: number | null }>> {
+  userId: string,
+  limit = 50
+): Promise<AgentActionRecord[]> {
   const rows = await db
     .prepare(
-      "SELECT id, action_type, description, status, created_at, reversed_at FROM agent_actions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
+      `SELECT id, action_type, description, status, approval_status, risk_level,
+              amount_cents, reasoning, undo_expires_at, approval_expires_at,
+              created_at, reversed_at
+       FROM agent_actions
+       WHERE user_id = ?
+       ORDER BY created_at DESC LIMIT ?`
     )
-    .bind(userId)
-    .all<{ id: string; action_type: string; description: string; status: string; created_at: number; reversed_at: number | null }>();
+    .bind(userId, limit)
+    .all<{
+      id: string; action_type: string; description: string; status: string;
+      approval_status: string; risk_level: string; amount_cents: number;
+      reasoning: string; undo_expires_at: number | null;
+      approval_expires_at: number | null; created_at: number; reversed_at: number | null;
+    }>();
 
   return rows.results.map((r) => ({
     id: r.id,
     actionType: r.action_type,
     description: r.description,
     status: r.status,
+    approvalStatus: r.approval_status ?? "auto_approved",
+    riskLevel: r.risk_level ?? "low",
+    amountCents: r.amount_cents ?? 0,
+    reasoning: r.reasoning ?? "",
+    undoExpiresAt: r.undo_expires_at,
+    approvalExpiresAt: r.approval_expires_at,
     createdAt: r.created_at,
     reversedAt: r.reversed_at,
   }));
@@ -445,6 +477,93 @@ export async function rejectAction(db: D1Database, id: string, userId: string): 
   return result.meta.changes > 0;
 }
 
+// ─── Account Linking (PRD-005) ────────────────────────────────────────────────
+
+export async function linkAccount(
+  db: D1Database,
+  userId: string,
+  account: {
+    name: string;
+    institution: string;
+    accountType: Account["accountType"];
+    balanceCents: number;
+    currency?: string;
+    plaidItemId?: string;
+    plaidAccountId?: string;
+    connectionStatus?: Account["connectionStatus"];
+  }
+): Promise<Account> {
+  const id = generateId("acc");
+  const now = Math.floor(Date.now() / 1000);
+  const connectionStatus = account.connectionStatus ?? (account.plaidItemId ? "healthy" : "manual");
+
+  await db
+    .prepare(
+      `INSERT INTO accounts
+         (id, user_id, name, institution, account_type, balance_cents, currency,
+          plaid_item_id, plaid_account_id, connection_status, linked_at, last_synced_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(
+      id, userId, account.name, account.institution, account.accountType,
+      account.balanceCents, account.currency ?? "USD",
+      account.plaidItemId ?? null, account.plaidAccountId ?? null,
+      connectionStatus, now, now, now
+    )
+    .run();
+
+  return {
+    id, userId, name: account.name, institution: account.institution,
+    accountType: account.accountType, balanceCents: account.balanceCents,
+    currency: account.currency ?? "USD", lastSyncedAt: now, createdAt: now,
+    plaidItemId: account.plaidItemId ?? null,
+    plaidAccountId: account.plaidAccountId ?? null,
+    connectionStatus, linkedAt: now,
+  };
+}
+
+export async function updateAccountConnectionStatus(
+  db: D1Database,
+  accountId: string,
+  userId: string,
+  status: Account["connectionStatus"]
+): Promise<boolean> {
+  const result = await db
+    .prepare("UPDATE accounts SET connection_status = ? WHERE id = ? AND user_id = ?")
+    .bind(status, accountId, userId)
+    .run();
+  return result.meta.changes > 0;
+}
+
+export async function disconnectAccount(
+  db: D1Database,
+  accountId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await db
+    .prepare("UPDATE accounts SET connection_status = 'disconnected', plaid_item_id = NULL, plaid_account_id = NULL WHERE id = ? AND user_id = ?")
+    .bind(accountId, userId)
+    .run();
+  return result.meta.changes > 0;
+}
+
+export async function createPlaidItem(
+  db: D1Database,
+  userId: string,
+  item: { itemId: string; institutionId?: string; institutionName: string }
+): Promise<string> {
+  const id = generateId("pi");
+  const now = Math.floor(Date.now() / 1000);
+  await db
+    .prepare(
+      `INSERT INTO plaid_items (id, user_id, item_id, institution_id, institution_name, status, created_at)
+       VALUES (?, ?, ?, ?, ?, 'healthy', ?)`
+    )
+    .bind(id, userId, item.itemId, item.institutionId ?? null, item.institutionName, now)
+    .run();
+  return id;
+}
+
 // ─── Conversations ─────────────────────────────────────────────────────────────
 
 export async function getConversation(
@@ -489,6 +608,8 @@ type DbAccount = {
   id: string; user_id: string; name: string; institution: string;
   account_type: string; balance_cents: number; currency: string;
   last_synced_at: number | null; created_at: number;
+  plaid_item_id: string | null; plaid_account_id: string | null;
+  connection_status: string | null; linked_at: number | null;
 };
 
 type DbTransaction = {
@@ -522,6 +643,10 @@ function toAccount(r: DbAccount): Account {
     accountType: r.account_type as Account["accountType"],
     balanceCents: r.balance_cents, currency: r.currency,
     lastSyncedAt: r.last_synced_at, createdAt: r.created_at,
+    plaidItemId: r.plaid_item_id ?? null,
+    plaidAccountId: r.plaid_account_id ?? null,
+    connectionStatus: (r.connection_status ?? "manual") as Account["connectionStatus"],
+    linkedAt: r.linked_at ?? null,
   };
 }
 

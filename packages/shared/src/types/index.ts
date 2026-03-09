@@ -23,6 +23,13 @@ export type AuthTokens = {
 // ─── Accounts ────────────────────────────────────────────────────────────────
 
 export type AccountType = "checking" | "savings" | "credit";
+export type ConnectionStatus =
+  | "healthy"
+  | "degraded"
+  | "error"
+  | "requires_reauth"
+  | "disconnected"
+  | "manual";
 
 export type Account = {
   id: string;
@@ -34,6 +41,11 @@ export type Account = {
   currency: string;
   lastSyncedAt: number | null;
   createdAt: number;
+  // Plaid / account linking fields (added in migration 0004)
+  plaidItemId: string | null;
+  plaidAccountId: string | null;
+  connectionStatus: ConnectionStatus;
+  linkedAt: number | null;
 };
 
 // ─── Transactions ─────────────────────────────────────────────────────────────

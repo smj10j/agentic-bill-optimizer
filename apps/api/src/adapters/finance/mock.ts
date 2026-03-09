@@ -21,6 +21,10 @@ export class MockFinanceAdapter implements FinanceAdapter {
         currency: "USD",
         lastSyncedAt: NOW,
         createdAt: NOW,
+        plaidItemId: null,
+        plaidAccountId: null,
+        connectionStatus: "manual",
+        linkedAt: NOW,
       },
       {
         id: generateId("acc"),
@@ -32,6 +36,10 @@ export class MockFinanceAdapter implements FinanceAdapter {
         currency: "USD",
         lastSyncedAt: NOW,
         createdAt: NOW,
+        plaidItemId: null,
+        plaidAccountId: null,
+        connectionStatus: "manual",
+        linkedAt: NOW,
       },
     ];
   }

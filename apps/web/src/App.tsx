@@ -16,6 +16,8 @@ import BillsPage from "./pages/BillsPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
 import YieldPage from "./pages/YieldPage";
 import AutopilotPage from "./pages/AutopilotPage";
+import ActionHistoryPage from "./pages/ActionHistoryPage";
+import AccountsPage from "./pages/AccountsPage";
 
 // ─── Root route ──────────────────────────────────────────────────────────────
 
@@ -118,6 +120,18 @@ const autopilotRoute = createRoute({
   component: AutopilotPage,
 });
 
+const historyRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/history",
+  component: ActionHistoryPage,
+});
+
+const accountsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/accounts",
+  component: AccountsPage,
+});
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 const routeTree = rootRoute.addChildren([
@@ -131,6 +145,8 @@ const routeTree = rootRoute.addChildren([
     subscriptionsRoute,
     yieldRoute,
     autopilotRoute,
+    historyRoute,
+    accountsRoute,
   ]),
 ]);
 

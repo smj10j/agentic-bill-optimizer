@@ -12,6 +12,8 @@ import { yieldRouter } from "./routes/yield.js";
 import { agentRouter } from "./routes/agent.js";
 import { autopilotRouter } from "./routes/autopilot.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { actionsRouter } from "./routes/actions.js";
+import { notificationsRouter } from "./routes/notifications.js";
 import type { Env } from "./types/env.js";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -53,6 +55,8 @@ app.route("/api/v1/yield", yieldRouter);
 app.route("/api/v1/agent", agentRouter);
 app.route("/api/v1/autopilot", autopilotRouter);
 app.route("/api/v1/dashboard", dashboardRouter);
+app.route("/api/v1/actions", actionsRouter);
+app.route("/api/v1/notifications", notificationsRouter);
 
 // ── Fallbacks ─────────────────────────────────────────────────────────────────
 
