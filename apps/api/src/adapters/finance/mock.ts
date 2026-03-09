@@ -153,6 +153,7 @@ export class MockFinanceAdapter implements FinanceAdapter {
   }
 
   async getUpcomingBills(_userId: string, lookAheadDays = 30): Promise<Bill[]> {
+    const defaults = { gracePeriodDays: 0, lateFeeCents: 0, paymentRail: "ach" as const, smartPayEnabled: true, billerCategory: "utility" as const };
     return ([
       {
         id: "bill_electric",
@@ -163,6 +164,7 @@ export class MockFinanceAdapter implements FinanceAdapter {
         status: "pending" as const,
         paidAt: null,
         createdAt: NOW - 25 * DAY,
+        ...defaults,
       },
       {
         id: "bill_internet",
@@ -173,6 +175,7 @@ export class MockFinanceAdapter implements FinanceAdapter {
         status: "pending" as const,
         paidAt: null,
         createdAt: NOW - 22 * DAY,
+        ...defaults,
       },
       {
         id: "bill_rent",
@@ -183,6 +186,8 @@ export class MockFinanceAdapter implements FinanceAdapter {
         status: "pending" as const,
         paidAt: null,
         createdAt: NOW - 7 * DAY,
+        ...defaults,
+        billerCategory: "rent" as const,
       },
     ] satisfies Bill[]).filter((b) => b.dueAt <= NOW + lookAheadDays * DAY);
   }

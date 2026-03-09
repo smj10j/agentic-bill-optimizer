@@ -5,8 +5,9 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../types/env.js";
 import type { AuthVariables } from "../middleware/auth.js";
 import { authMiddleware } from "../middleware/auth.js";
-import { ok } from "../lib/response.js";
+import { ok, err } from "../lib/response.js";
 import * as financeService from "../services/finance.js";
+import * as smartBillPay from "../services/smart-bill-pay.js";
 import { MockMoneyAdapter } from "../adapters/money/mock.js";
 
 type Variables = AuthVariables;
@@ -20,6 +21,8 @@ const querySchema = z.object({
   days: z.coerce.number().min(1).max(365).optional().default(30),
 });
 
+// ── GET / ──────────────────────────────────────────────────────────────────────
+
 router.get("/", zValidator("query", querySchema), async (c) => {
   const userId = c.get("userId");
   const { status, days } = c.req.valid("query");
@@ -32,13 +35,59 @@ router.get("/", zValidator("query", querySchema), async (c) => {
   return c.json(ok(bills));
 });
 
+// ── GET /schedule ──────────────────────────────────────────────────────────────
+// Returns pending bills annotated with smart pay timing and yield savings.
+
+router.get("/schedule", async (c) => {
+  const userId = c.get("userId");
+  const schedule = await smartBillPay.getSmartBillSchedule(c.env.DB, userId);
+  return c.json(ok(schedule));
+});
+
+// ── PUT /:id ───────────────────────────────────────────────────────────────────
+// Update smart pay settings for a specific bill.
+
+const smartPayPatchSchema = z.object({
+  gracePeriodDays: z.number().int().min(0).max(60).optional(),
+  lateFeeCents: z.number().int().min(0).optional(),
+  paymentRail: z.enum(["ach", "same_day_ach", "card", "check", "auto"]).optional(),
+  smartPayEnabled: z.boolean().optional(),
+  billerCategory: z.enum(["utility", "insurance", "rent", "mortgage", "credit_card", "subscription", "medical", "other"]).optional(),
+});
+
+router.put("/:id", zValidator("json", smartPayPatchSchema), async (c) => {
+  const userId = c.get("userId");
+  const id = c.req.param("id");
+  const raw = c.req.valid("json");
+
+  // Strip undefined values for exactOptionalPropertyTypes
+  const patch = Object.fromEntries(
+    Object.entries(raw).filter(([, v]) => v !== undefined)
+  ) as Parameters<typeof financeService.updateBillSmartPay>[3];
+
+  const updated = await financeService.updateBillSmartPay(c.env.DB, id, userId, patch);
+  if (!updated) {
+    return c.json(err("NOT_FOUND", "Bill not found"), 404);
+  }
+
+  // Return the bill with fresh smart pay timing
+  const bills = await financeService.getBills(c.env.DB, userId, { lookAheadDays: 365 });
+  const bill = bills.find((b) => b.id === id);
+  if (!bill) return c.json(err("NOT_FOUND", "Bill not found"), 404);
+
+  const [yieldPos] = await Promise.all([financeService.getOrCreateYieldPosition(c.env.DB, userId)]);
+  const smartPay = smartBillPay.calculateOptimalPayDate(bill, yieldPos.apyBasisPoints);
+
+  return c.json(ok({ ...bill, smartPay }));
+});
+
+// ── POST /:id/pay ──────────────────────────────────────────────────────────────
+
 router.post("/:id/pay", async (c) => {
   const userId = c.get("userId");
   const billId = c.req.param("id");
 
-  const [bills] = await Promise.all([
-    financeService.getBills(c.env.DB, userId, { lookAheadDays: 365 }),
-  ]);
+  const bills = await financeService.getBills(c.env.DB, userId, { lookAheadDays: 365 });
 
   const bill = bills.find((b) => b.id === billId);
   if (!bill) {

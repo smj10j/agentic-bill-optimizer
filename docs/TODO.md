@@ -141,6 +141,37 @@ Current implementation tasks, updated as work progresses.
 
 ---
 
+## Sprint 2: PRD-003 — Smart Bill Pay Timing ✅ COMPLETE
+
+### DB / Migration
+- [x] `0003_smart_bill_pay.sql` — add smart pay columns to bills table
+- [x] Apply migration local + remote D1
+
+### Shared Types
+- [x] Extend `Bill` type with smart pay fields (gracePeriodDays, lateFeeCents, paymentRail, smartPayEnabled, billerCategory)
+
+### Backend — Service
+- [x] `services/smart-bill-pay.ts`: calculateOptimalPayDate, effectiveGracePeriod, getSmartBillSchedule
+- [x] Update `finance.ts` getBills/toBill to read new columns + updateBillSmartPay
+
+### Backend — Route
+- [x] `GET /bills/schedule` — bills with computed smart pay timing + yield savings
+- [x] `PUT /bills/:id` — update grace_period_days, smart_pay_enabled, biller_category
+
+### Frontend
+- [x] `lib/bills.ts` — typed API client
+- [x] Rewrite `BillsPage.tsx` — real data, smart pay dates, yield savings, color-coded badges, summary bar
+
+### Tests
+- [x] 15 unit tests for scheduling algorithm (calculateOptimalPayDate + effectiveGracePeriod)
+
+### Docs + Deploy
+- [x] Update PRD-003 → Implemented, REGISTRY.md, API.md
+- [x] Deploy + validate
+- [x] Commit + push
+
+---
+
 ## Sprint 2: Backlog
 
 ### Auth & UX

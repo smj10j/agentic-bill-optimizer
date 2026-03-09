@@ -21,7 +21,7 @@ All product requirements documents tracked here. Update status as PRDs move thro
 |---|---|---|---|---|
 | [PRD-001](./PRD-001-mvp-foundation.md) | MVP Foundation | `Implemented` | 2026-03-08 | Phase 1 complete and deployed. Phase 2 (autopilot, real integrations) in backlog. |
 | [PRD-002](./PRD-002-autopilot-mode.md) | Autopilot Mode & Agent Autonomy | `Implemented` | 2026-03-08 | Tiered autopilot, guardrail evaluation, trust score, pending action approval — deployed |
-| [PRD-003](./PRD-003-smart-bill-pay.md) | Smart Bill Pay Timing | `In Review` | 2026-03-08 | P0 — Yield-aware scheduling; grace periods; cash flow conflict resolution |
+| [PRD-003](./PRD-003-smart-bill-pay.md) | Smart Bill Pay Timing | `Implemented` | 2026-03-08 | Scheduling algo, grace periods, yield savings estimate, smart pay UI — deployed |
 | [PRD-004](./PRD-004-approval-undo-framework.md) | Action Approval & Undo Framework | `In Review` | 2026-03-08 | P0 — Action state machine; undo windows; step-up auth; audit trail |
 | [PRD-005](./PRD-005-real-account-linking.md) | Real Account Linking | `In Review` | 2026-03-08 | P0 — Plaid integration; webhook sync; connection health; data governance |
 | [PRD-006](./PRD-006-notifications-alerts.md) | Push Notifications & Alerts | `In Review` | 2026-03-08 | P0 — Web push + email; taxonomy; smart timing; anti-fatigue rules |

@@ -391,6 +391,90 @@ Move funds from yield back to checking.
 
 ---
 
+## Bills
+
+All endpoints require `Authorization: Bearer <token>`.
+
+### GET /bills
+List bills within a look-ahead window.
+
+**Query params**: `status` (pending|paid|overdue), `days` (1–365, default 30)
+
+---
+
+### GET /bills/schedule
+Returns all pending/overdue bills annotated with smart pay timing and estimated yield savings. Used by the Bills page.
+
+**Response**
+```json
+{
+  "data": [
+    {
+      "id": "bill_abc",
+      "name": "Electric",
+      "amountCents": 8750,
+      "dueAt": 1709500000,
+      "status": "pending",
+      "gracePeriodDays": 0,
+      "lateFeeCents": 0,
+      "paymentRail": "ach",
+      "smartPayEnabled": true,
+      "billerCategory": "utility",
+      "smartPay": {
+        "billId": "bill_abc",
+        "optimalInitiateDate": 1709240000,
+        "safePayBy": 1709413600,
+        "floatDays": 0,
+        "yieldSavedCents": 0,
+        "effectiveGraceDays": 0,
+        "isUrgent": true,
+        "isAtRisk": false
+      }
+    }
+  ],
+  "error": null
+}
+```
+
+**Smart pay fields**:
+- `optimalInitiateDate`: Unix timestamp Orbit should initiate payment
+- `safePayBy`: Latest safe payment date (due + grace - 1 buffer day)
+- `floatDays`: Extra days of yield vs paying on due date immediately
+- `yieldSavedCents`: Estimated yield earned during float period
+- `isUrgent`: Optimal initiate date is within 2 days
+- `isAtRisk`: Payment is overdue / already past optimal date
+
+---
+
+### PUT /bills/:id
+Update smart pay settings for a bill.
+
+**Body** (all optional)
+```json
+{
+  "gracePeriodDays": 7,
+  "lateFeeCents": 3500,
+  "paymentRail": "ach",
+  "smartPayEnabled": true,
+  "billerCategory": "utility"
+}
+```
+
+**billerCategory** values: `utility | insurance | rent | mortgage | credit_card | subscription | medical | other`
+
+**paymentRail** values: `ach | same_day_ach | card | check | auto`
+
+**Response**: Updated bill with `smartPay` timing recalculated.
+
+---
+
+### POST /bills/:id/pay
+Immediately pay a bill (bypasses smart pay scheduling).
+
+**Response**: `{ "data": { "actionId": "...", "description": "...", "paidAt": 1709100000 }, "error": null }`
+
+---
+
 ## Dashboard
 
 All endpoints require `Authorization: Bearer <token>`.

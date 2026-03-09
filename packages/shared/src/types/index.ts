@@ -73,6 +73,16 @@ export type Subscription = {
 // ─── Bills ───────────────────────────────────────────────────────────────────
 
 export type BillStatus = "pending" | "paid" | "overdue";
+export type BillerCategory =
+  | "utility"
+  | "insurance"
+  | "rent"
+  | "mortgage"
+  | "credit_card"
+  | "subscription"
+  | "medical"
+  | "other";
+export type PaymentRail = "ach" | "same_day_ach" | "card" | "check" | "auto";
 
 export type Bill = {
   id: string;
@@ -83,6 +93,12 @@ export type Bill = {
   status: BillStatus;
   paidAt: number | null;
   createdAt: number;
+  // Smart pay fields (added in migration 0003)
+  gracePeriodDays: number;
+  lateFeeCents: number;
+  paymentRail: PaymentRail;
+  smartPayEnabled: boolean;
+  billerCategory: BillerCategory;
 };
 
 // ─── Agent ───────────────────────────────────────────────────────────────────

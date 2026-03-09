@@ -228,6 +228,37 @@ export async function upsertBills(
   await db.batch(stmts);
 }
 
+export async function updateBillSmartPay(
+  db: D1Database,
+  id: string,
+  userId: string,
+  patch: {
+    gracePeriodDays?: number;
+    lateFeeCents?: number;
+    paymentRail?: string;
+    smartPayEnabled?: boolean;
+    billerCategory?: string;
+  }
+): Promise<boolean> {
+  const sets: string[] = [];
+  const binds: (string | number)[] = [];
+
+  if (patch.gracePeriodDays !== undefined) { sets.push("grace_period_days = ?"); binds.push(patch.gracePeriodDays); }
+  if (patch.lateFeeCents !== undefined) { sets.push("late_fee_cents = ?"); binds.push(patch.lateFeeCents); }
+  if (patch.paymentRail !== undefined) { sets.push("payment_rail = ?"); binds.push(patch.paymentRail); }
+  if (patch.smartPayEnabled !== undefined) { sets.push("smart_pay_enabled = ?"); binds.push(patch.smartPayEnabled ? 1 : 0); }
+  if (patch.billerCategory !== undefined) { sets.push("biller_category = ?"); binds.push(patch.billerCategory); }
+
+  if (sets.length === 0) return true;
+
+  binds.push(id, userId);
+  const result = await db
+    .prepare(`UPDATE bills SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`)
+    .bind(...binds)
+    .run();
+  return result.meta.changes > 0;
+}
+
 export async function markBillPaid(
   db: D1Database,
   id: string,
@@ -476,6 +507,8 @@ type DbSubscription = {
 type DbBill = {
   id: string; user_id: string; name: string; amount_cents: number;
   due_at: number; status: string; paid_at: number | null; created_at: number;
+  grace_period_days: number; late_fee_cents: number; payment_rail: string;
+  smart_pay_enabled: number; biller_category: string;
 };
 
 type DbYield = {
@@ -517,6 +550,11 @@ function toBill(r: DbBill): Bill {
     id: r.id, userId: r.user_id, name: r.name, amountCents: r.amount_cents,
     dueAt: r.due_at, status: r.status as Bill["status"],
     paidAt: r.paid_at, createdAt: r.created_at,
+    gracePeriodDays: r.grace_period_days ?? 0,
+    lateFeeCents: r.late_fee_cents ?? 0,
+    paymentRail: (r.payment_rail ?? "ach") as Bill["paymentRail"],
+    smartPayEnabled: (r.smart_pay_enabled ?? 1) === 1,
+    billerCategory: (r.biller_category ?? "utility") as Bill["billerCategory"],
   };
 }
 
