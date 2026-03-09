@@ -429,21 +429,33 @@ export const DEMO_AUTOPILOT = {
 };
 
 // ─── Dashboard Summary ────────────────────────────────────────────────────────
+// Must match the shape returned by GET /dashboard/summary in routes/dashboard.ts
 
 export const DEMO_DASHBOARD = {
-  checkingSavingsCents: 324718 + 85000,
-  totalCents: 324718 + 85000 - 142000,
-  accounts: DEMO_ACCOUNTS,
-  yieldPosition: DEMO_YIELD,
+  balanceSummary: {
+    checkingSavingsCents: 324718 + 85000,
+    yieldCents: 0,
+    totalCents: 324718 + 85000 - 142000,
+    lastSyncedAt: NOW - 3600,
+    accounts: DEMO_ACCOUNTS.filter((a) => a.accountType === "checking" || a.accountType === "savings"),
+  },
   pendingActions: [],
-  autopilot: DEMO_AUTOPILOT,
+  autopilot: {
+    enabled: true,
+    tier: 1,
+    actionsThisWeek: 0,
+  },
   upcomingBills: DEMO_BILLS.filter((b) => b.status === "pending"),
   overdueBills: [],
-  recentActions: [],
+  yieldSnapshot: {
+    balanceCents: DEMO_YIELD.balanceCents,
+    apyBasisPoints: DEMO_YIELD.apyBasisPoints,
+    totalEarnedCents: DEMO_YIELD.totalEarnedCents,
+    monthlyEarningCents: 0,
+    weeklyEarningCents: 0,
+  },
+  recentActivity: [],
   flaggedSubscriptions: DEMO_SUBSCRIPTIONS.filter((s) => ["sub_demo_gym", "sub_demo_hulu", "sub_demo_linkedin"].includes(s.id)),
-  actionsThisWeek: 0,
-  monthlyEarningCents: 0,
-  weeklyEarningCents: 0,
 };
 
 // ─── System prompt context for the agent in demo mode ────────────────────────
