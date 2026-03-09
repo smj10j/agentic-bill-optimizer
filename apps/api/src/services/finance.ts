@@ -13,7 +13,12 @@ import { generateId } from "../lib/id.js";
 export async function getAccounts(db: D1Database, userId: string): Promise<Account[]> {
   const rows = await db
     .prepare(
-      "SELECT id, user_id, name, institution, account_type, balance_cents, currency, last_synced_at, created_at FROM accounts WHERE user_id = ? ORDER BY created_at ASC"
+      `SELECT id, user_id, name, institution, account_type, balance_cents, currency,
+              last_synced_at, created_at, plaid_item_id, plaid_account_id,
+              connection_status, linked_at
+       FROM accounts
+       WHERE user_id = ? AND (connection_status IS NULL OR connection_status != 'disconnected')
+       ORDER BY created_at ASC`
     )
     .bind(userId)
     .all<DbAccount>();
@@ -26,20 +31,33 @@ export async function insertAccount(db: D1Database, account: Omit<Account, "id">
   const now = Math.floor(Date.now() / 1000);
   await db
     .prepare(
-      "INSERT INTO accounts (id, user_id, name, institution, account_type, balance_cents, currency, last_synced_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      `INSERT INTO accounts
+         (id, user_id, name, institution, account_type, balance_cents, currency,
+          last_synced_at, created_at, plaid_item_id, plaid_account_id, connection_status, linked_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(plaid_account_id) DO UPDATE SET
+         name = excluded.name,
+         balance_cents = excluded.balance_cents,
+         last_synced_at = excluded.last_synced_at,
+         plaid_item_id = excluded.plaid_item_id,
+         connection_status = 'healthy'`
     )
     .bind(
-      id,
-      account.userId,
-      account.name,
-      account.institution,
-      account.accountType,
-      account.balanceCents,
-      account.currency,
-      account.lastSyncedAt ?? now,
-      now
+      id, account.userId, account.name, account.institution, account.accountType,
+      account.balanceCents, account.currency, account.lastSyncedAt ?? now, now,
+      account.plaidItemId ?? null, account.plaidAccountId ?? null,
+      account.connectionStatus ?? "manual", account.linkedAt ?? null
     )
     .run();
+
+  // If upserted by plaid_account_id, return the existing row (may have different id)
+  if (account.plaidAccountId) {
+    const row = await db
+      .prepare("SELECT id, user_id, name, institution, account_type, balance_cents, currency, last_synced_at, created_at, plaid_item_id, plaid_account_id, connection_status, linked_at FROM accounts WHERE plaid_account_id = ?")
+      .bind(account.plaidAccountId)
+      .first<DbAccount>();
+    if (row) return toAccount(row);
+  }
   return { ...account, id, createdAt: now };
 }
 

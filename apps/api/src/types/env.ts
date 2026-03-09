@@ -6,7 +6,10 @@ export type Env = {
   // Secrets (set via wrangler secret)
   ANTHROPIC_API_KEY: string;
   JWT_SECRET: string;
+  PLAID_CLIENT_ID: string;
+  PLAID_SECRET: string;
 
   // Vars
   ENVIRONMENT: "development" | "production";
+  PLAID_ENV: "sandbox" | "development" | "production";
 };

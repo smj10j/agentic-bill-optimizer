@@ -2,8 +2,9 @@
  * PRD-044: Settings & Configuration Hub
  * 6 sections: Autopilot, Accounts, Notifications, Profile, Intelligence, About
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouterState, useNavigate } from "@tanstack/react-router";
+import { usePlaidLink, type PlaidLinkOnSuccess } from "react-plaid-link";
 import { useAuth } from "../store/auth.js";
 import { getAutopilotSettings, updateAutopilotSettings, type AutopilotSettings } from "../lib/autopilot.js";
 import { getNotificationPrefs, updateNotificationPrefs, getProfile, type NotificationPrefs, type Profile } from "../lib/settings.js";
@@ -136,43 +137,82 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
 
 function AccountsSection() {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
+  const [linkToken, setLinkToken] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const load = () => getAccounts().then(setAccounts).catch(() => {});
-  useEffect(() => { void load(); }, []);
+  const load = useCallback(() => getAccounts().then(setAccounts).catch(() => {}), []);
+  useEffect(() => { void load(); }, [load]);
 
-  async function handleDisconnect(id: string) {
-    await disconnectAccount(id);
-    void load();
-  }
-
-  async function handleLink() {
+  const onSuccess: PlaidLinkOnSuccess = useCallback(async (publicToken, metadata) => {
     setLinking(true);
+    setError(null);
     try {
-      const { linkToken } = await getLinkToken();
-      await exchangeLinkToken(linkToken, "demo_bank", "Demo Bank");
+      await exchangeLinkToken(
+        publicToken,
+        metadata.institution?.institution_id ?? "unknown",
+        metadata.institution?.name ?? "Bank"
+      );
       void load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to link account");
     } finally {
+      setLinking(false);
+      setLinkToken(null);
+    }
+  }, [load]);
+
+  const { open, ready } = usePlaidLink({
+    token: linkToken,
+    onSuccess,
+    onExit: () => { setLinking(false); setLinkToken(null); },
+  });
+
+  // Open Plaid Link once the token is loaded and SDK is ready
+  useEffect(() => {
+    if (linkToken && ready) open();
+  }, [linkToken, ready, open]);
+
+  async function handleAddAccount() {
+    setLinking(true);
+    setError(null);
+    try {
+      const { linkToken: token } = await getLinkToken();
+      setLinkToken(token);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to start account linking");
       setLinking(false);
     }
   }
 
-  const active = accounts?.filter((a) => a.connectionStatus !== "disconnected") ?? [];
-  const totalCents = active.reduce((s, a) => s + a.balanceCents, 0);
+  async function handleDisconnect(id: string) {
+    try {
+      await disconnectAccount(id);
+      void load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to disconnect account");
+    }
+  }
+
+  const totalCents = (accounts ?? []).reduce((s, a) => s + a.balanceCents, 0);
 
   return (
     <div className="space-y-4">
-      {accounts !== null && active.length > 0 && (
+      {accounts !== null && accounts.length > 0 && (
         <div className="bg-blue-50 rounded-xl p-3 flex items-center justify-between">
           <p className="text-sm text-blue-700">Total balance</p>
           <p className="font-bold text-blue-900">${(totalCents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
         </div>
       )}
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
+
       {accounts === null && <div className="animate-pulse h-24 bg-gray-100 rounded-xl" />}
 
       <div className="space-y-3">
-        {active.map((account) => {
+        {(accounts ?? []).map((account) => {
           const cfg = STATUS_CONFIG[account.connectionStatus] ?? STATUS_CONFIG.manual;
           const icon = account.accountType === "checking" ? "🏦" : account.accountType === "savings" ? "💰" : "💳";
           return (
@@ -205,11 +245,11 @@ function AccountsSection() {
           );
         })}
         <button
-          onClick={handleLink}
+          onClick={() => void handleAddAccount()}
           disabled={linking}
           className="w-full py-3 rounded-xl border-2 border-dashed border-blue-300 text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-colors text-sm font-medium disabled:opacity-50"
         >
-          {linking ? "Connecting..." : "+ Add account"}
+          {linking ? "Opening Plaid..." : "+ Add account"}
         </button>
       </div>
     </div>
