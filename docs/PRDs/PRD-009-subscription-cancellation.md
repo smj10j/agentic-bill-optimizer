@@ -13,6 +13,12 @@ Cancellation should take one tap. The user says "cancel Netflix" and Orbit handl
 
 ---
 
+## Regulatory Tailwind
+
+**FTC "Click to Cancel" Rule (finalized 2024)**: Companies must make cancellation as easy as sign-up. This rule, now in effect, requires online cancellation options for any service signed up for online. This significantly improves the reliability of automated cancellation flows — billers can no longer legally require phone calls for services sold online. This is a direct tailwind for Orbit's automated cancellation capability.
+
+---
+
 ## Problem Statement
 
 The subscription cancellation problem has three layers:

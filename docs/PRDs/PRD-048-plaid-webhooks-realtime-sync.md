@@ -50,6 +50,17 @@ Plaid's webhook system can push notifications to Orbit within minutes of new tra
 
 ---
 
+## Regulatory Tailwind: CFPB Section 1033
+
+The CFPB's open banking rule (finalized October 2024) under Dodd-Frank Section 1033 requires banks to provide consumer financial data in standardized machine-readable formats to authorized third parties. Effective dates: largest banks by 2026, smaller institutions by 2027–2030.
+
+**Impact on Orbit**:
+- Legalizes and standardizes the data access that Plaid provides today
+- Longer term: may allow Orbit to receive data directly from banks without a middleman, reducing Plaid dependency and cost
+- Shorter term: banks must not block or degrade third-party data access, making webhook reliability better
+
+---
+
 ## Architecture
 
 ### Webhook Receiver Endpoint

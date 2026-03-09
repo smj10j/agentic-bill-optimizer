@@ -72,6 +72,8 @@ All product requirements documents tracked here. Update status as PRDs move thro
 | [PRD-051](./PRD-051-insurance-monitor.md) | Insurance Rate Monitor | **P1** | `Draft` | 2026-03-09 | **NEW** — Premium detection, benchmark overpayment, shopping triggers, affiliate partnerships. |
 | [PRD-052](./PRD-052-native-mobile-app.md) | Native Mobile App | **P1** | `Draft` | 2026-03-09 | **NEW** — React Native + Expo, reliable push notifications (APNs/FCM), biometric auth, home screen widgets. |
 | [PRD-053](./PRD-053-monetization-model.md) | Monetization Model | **P0** | `Draft` | 2026-03-09 | **NEW** — Subscription tiers (Free/$8/$15), success fees, yield spread, affiliate, anti-patterns. |
+| [PRD-054](./PRD-054-medical-bill-optimizer.md) | Medical Bill Optimizer | **P1** | `Draft` | 2026-03-09 | **NEW** — Error detection, charity care navigation, No Surprises Act compliance, cash-pay negotiation. Most underserved financial pain point. |
+| [PRD-055](./PRD-055-employer-benefits-optimizer.md) | Employer Benefits Optimizer | **P1** | `Draft` | 2026-03-09 | **NEW** — 401k match gap, FSA spend-down, HSA optimization, ESPP nudge. Avg $1,000+/year uncaptured per user. |
 
 ---
 
