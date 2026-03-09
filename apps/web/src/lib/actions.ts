@@ -19,12 +19,28 @@ export type AgentActionRecord = {
 };
 
 export async function getActions(): Promise<AgentActionRecord[]> {
-  const res = await apiFetch<AgentActionRecord[]>("/api/v1/actions");
+  const res = await apiFetch<AgentActionRecord[]>("/actions");
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
 
 export async function undoAction(id: string): Promise<void> {
-  const res = await apiFetch<{ reversed: boolean }>(`/api/v1/actions/${id}/undo`, { method: "POST" });
+  const res = await apiFetch<{ reversed: boolean }>(`/actions/${id}/undo`, { method: "POST" });
   if (res.error) throw new Error(res.error.message);
+}
+
+export async function approveAction(id: string): Promise<void> {
+  const res = await apiFetch<{ approved: boolean }>(`/actions/${id}/approve`, { method: "POST" });
+  if (res.error) throw new Error(res.error.message);
+}
+
+export async function rejectAction(id: string): Promise<void> {
+  const res = await apiFetch<{ rejected: boolean }>(`/actions/${id}/reject`, { method: "POST" });
+  if (res.error) throw new Error(res.error.message);
+}
+
+export async function getPendingActions(): Promise<AgentActionRecord[]> {
+  const res = await apiFetch<AgentActionRecord[]>("/actions/pending");
+  if (res.error) throw new Error(res.error.message);
+  return res.data;
 }

@@ -156,8 +156,30 @@ export async function getPushSubscriptions(
 
 // ─── Convenience: notify + push together ─────────────────────────────────────
 
+async function getDailyNonCriticalCount(db: D1Database, userId: string): Promise<number> {
+  const dayStart = Math.floor(Date.now() / 1000) - 86400;
+  const row = await db
+    .prepare("SELECT COUNT(*) as cnt FROM notifications WHERE user_id = ? AND created_at >= ? AND priority NOT IN ('critical')")
+    .bind(userId, dayStart)
+    .first<{ cnt: number }>();
+  return row?.cnt ?? 0;
+}
+
+async function hasRecentDuplicate(db: D1Database, userId: string, type: string): Promise<boolean> {
+  const weekAgo = Math.floor(Date.now() / 1000) - 7 * 86400;
+  const row = await db
+    .prepare("SELECT id FROM notifications WHERE user_id = ? AND type = ? AND created_at >= ? LIMIT 1")
+    .bind(userId, type, weekAgo)
+    .first<{ id: string }>();
+  return row !== null;
+}
+
 /**
- * Creates an in-app notification. Web push is sent if the user has subscriptions.
+ * Creates an in-app notification with anti-fatigue rules.
+ * Critical notifications always go through. Non-critical notifications are:
+ * - Deduplicated by type within 7 days
+ * - Capped at 3 per day
+ * Web push is sent if the user has subscriptions.
  * Pass `resendApiKey` to also send email for critical/high priority.
  */
 export async function notify(
@@ -165,6 +187,16 @@ export async function notify(
   userId: string,
   payload: NotificationPayload
 ): Promise<void> {
+  // Anti-fatigue: critical always goes through
+  if (payload.priority !== "critical") {
+    // Dedup same type within 7 days
+    if (await hasRecentDuplicate(db, userId, payload.type)) return;
+
+    // Max 3 non-critical per day
+    const dailyCount = await getDailyNonCriticalCount(db, userId);
+    if (dailyCount >= 3) return;
+  }
+
   await createNotification(db, userId, payload);
   // Push notification sending requires web-push library which needs Worker-compatible crypto.
   // This is wired up post-VAPID key provisioning (see PRD-006 setup notes).
@@ -223,5 +255,23 @@ export async function notifyBillDue(
     body: `${amount} will be paid ${timing}. Orbit is handling it.`,
     actionUrl: "/bills",
     actionLabel: "View",
+  });
+}
+
+export async function notifyPaymentFailed(
+  db: D1Database,
+  userId: string,
+  billerName: string,
+  amountCents: number,
+  reason: string
+): Promise<void> {
+  const amount = `$${(amountCents / 100).toFixed(2)}`;
+  await createNotification(db, userId, {  // bypass anti-fatigue for failures
+    type: "payment_failed",
+    priority: "critical",
+    title: `Payment to ${billerName} failed`,
+    body: `${amount} payment could not be processed. ${reason}`,
+    actionUrl: "/bills",
+    actionLabel: "Review",
   });
 }

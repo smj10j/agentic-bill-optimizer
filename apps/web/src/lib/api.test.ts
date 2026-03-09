@@ -121,3 +121,32 @@ describe("apiFetch", () => {
     }
   });
 });
+
+// ─── Regression: no double-prefixed /api/v1 paths ─────────────────────────────
+// apiFetch prepends API_BASE (/api/v1) automatically. Lib functions must pass
+// relative paths like "/insights", never "/api/v1/insights".
+
+describe("apiFetch path convention (regression)", () => {
+  it("no lib file passes a /api/v1/-prefixed path to apiFetch", async () => {
+    const { readdirSync, readFileSync } = await import("fs");
+    const { join, dirname } = await import("path");
+    const { fileURLToPath } = await import("url");
+
+    const dir = join(dirname(fileURLToPath(import.meta.url)));
+    const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+
+    const violations: string[] = [];
+    for (const file of files) {
+      const content = readFileSync(join(dir, file), "utf-8");
+      // Match apiFetch("... or apiFetch(`... followed by /api/v1/
+      if (/apiFetch\([`"']\/api\/v1\//.test(content)) {
+        violations.push(file);
+      }
+    }
+
+    expect(
+      violations,
+      `These lib files pass a double-prefixed /api/v1/ path to apiFetch (apiFetch already prepends /api/v1): ${violations.join(", ")}`
+    ).toHaveLength(0);
+  });
+});

@@ -21,19 +21,19 @@ export type InsightRecord = {
 export type InsightFeedback = "helpful" | "not_helpful" | "acted" | "dismissed";
 
 export async function getInsights(): Promise<InsightRecord[]> {
-  const res = await apiFetch<InsightRecord[]>("/api/v1/insights");
+  const res = await apiFetch<InsightRecord[]>("/insights");
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
 
 export async function runInsightDetection(): Promise<{ detected: number; ids: string[] }> {
-  const res = await apiFetch<{ detected: number; ids: string[] }>("/api/v1/insights/run", { method: "POST" });
+  const res = await apiFetch<{ detected: number; ids: string[] }>("/insights/run", { method: "POST" });
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
 
 export async function recordInsightFeedback(id: string, feedback: InsightFeedback): Promise<void> {
-  const res = await apiFetch<{ recorded: boolean }>(`/api/v1/insights/${id}/feedback`, {
+  const res = await apiFetch<{ recorded: boolean }>(`/insights/${id}/feedback`, {
     method: "POST",
     body: { feedback },
   });
@@ -41,5 +41,5 @@ export async function recordInsightFeedback(id: string, feedback: InsightFeedbac
 }
 
 export async function markInsightViewed(id: string): Promise<void> {
-  await apiFetch<{ viewed: boolean }>(`/api/v1/insights/${id}/view`, { method: "POST" });
+  await apiFetch<{ viewed: boolean }>(`/insights/${id}/view`, { method: "POST" });
 }

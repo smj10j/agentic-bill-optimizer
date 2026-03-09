@@ -14,22 +14,22 @@ export type Notification = {
 
 export async function getNotifications(unreadOnly = false): Promise<{ notifications: Notification[]; unreadCount: number }> {
   const qs = unreadOnly ? "?unread=true" : "";
-  const res = await apiFetch<{ notifications: Notification[]; unreadCount: number }>(`/api/v1/notifications${qs}`);
+  const res = await apiFetch<{ notifications: Notification[]; unreadCount: number }>(`/notifications${qs}`);
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
 
 export async function markRead(id: string): Promise<void> {
-  const res = await apiFetch<{ read: boolean }>(`/api/v1/notifications/${id}/read`, { method: "POST" });
+  const res = await apiFetch<{ read: boolean }>(`/notifications/${id}/read`, { method: "POST" });
   if (res.error) throw new Error(res.error.message);
 }
 
 export async function markAllRead(): Promise<void> {
-  const res = await apiFetch<{ markedRead: number }>("/api/v1/notifications/read-all", { method: "POST" });
+  const res = await apiFetch<{ markedRead: number }>("/notifications/read-all", { method: "POST" });
   if (res.error) throw new Error(res.error.message);
 }
 
 export async function dismissNotification(id: string): Promise<void> {
-  const res = await apiFetch<{ dismissed: boolean }>(`/api/v1/notifications/${id}`, { method: "DELETE" });
+  const res = await apiFetch<{ dismissed: boolean }>(`/notifications/${id}`, { method: "DELETE" });
   if (res.error) throw new Error(res.error.message);
 }

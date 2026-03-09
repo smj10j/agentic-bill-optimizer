@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.js";
 import "./index.css";
 
+// Register service worker for push notifications (PRD-006)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(console.error);
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

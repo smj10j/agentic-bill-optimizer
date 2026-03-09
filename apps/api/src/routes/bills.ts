@@ -1,18 +1,15 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { HTTPException } from "hono/http-exception";
 import type { Env } from "../types/env.js";
 import type { AuthVariables } from "../middleware/auth.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { ok, err } from "../lib/response.js";
 import * as financeService from "../services/finance.js";
 import * as smartBillPay from "../services/smart-bill-pay.js";
-import { MockMoneyAdapter } from "../adapters/money/mock.js";
 
 type Variables = AuthVariables;
 const router = new Hono<{ Bindings: Env; Variables: Variables }>();
-const moneyAdapter = new MockMoneyAdapter();
 
 router.use("*", authMiddleware);
 
@@ -88,28 +85,43 @@ router.post("/:id/pay", async (c) => {
   const billId = c.req.param("id");
 
   const bills = await financeService.getBills(c.env.DB, userId, { lookAheadDays: 365 });
-
   const bill = bills.find((b) => b.id === billId);
-  if (!bill) {
-    throw new HTTPException(404, { message: "Bill not found" });
-  }
-  if (bill.status === "paid") {
-    throw new HTTPException(422, { message: "Bill is already paid" });
+  if (!bill) return c.json(err("NOT_FOUND", "Bill not found"), 404);
+  if (bill.status === "paid") return c.json(err("UNPROCESSABLE", "Bill is already paid"), 422);
+
+  // Idempotency: use provided key or generate from bill+user
+  const idempotencyKey = c.req.header("Idempotency-Key") ?? `pay_${userId}_${billId}`;
+
+  const existing = await financeService.getPaymentByIdempotencyKey(c.env.DB, idempotencyKey);
+  if (existing) {
+    return c.json(ok({ paymentId: existing.id, status: existing.status, duplicate: true }));
   }
 
-  const txResult = await moneyAdapter.settleBill(userId, billId, bill.amountCents);
-  const paidAt = txResult.timestamp;
+  const payment = await financeService.createPayment(c.env.DB, {
+    userId,
+    billId,
+    billerName: bill.name,
+    amountCents: bill.amountCents,
+    idempotencyKey,
+  });
 
+  const paidAt = Math.floor(Date.now() / 1000);
   await financeService.markBillPaid(c.env.DB, billId, userId, paidAt);
 
   const actionId = await financeService.insertAgentAction(c.env.DB, {
     userId,
     actionType: "bill_payment",
     description: `Paid ${bill.name} ($${(bill.amountCents / 100).toFixed(2)})`,
-    payload: { billId, amountCents: bill.amountCents, transactionId: txResult.transactionId },
+    payload: { billId, paymentId: payment.id, amountCents: bill.amountCents },
   });
 
-  return c.json(ok({ actionId, description: txResult.description, paidAt }));
+  return c.json(ok({
+    actionId,
+    paymentId: payment.id,
+    status: payment.status,
+    description: `Paid ${bill.name}`,
+    paidAt,
+  }));
 });
 
 export { router as billsRouter };

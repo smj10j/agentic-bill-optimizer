@@ -22,10 +22,10 @@ All product requirements documents tracked here. Update status as PRDs move thro
 | [PRD-001](./PRD-001-mvp-foundation.md) | MVP Foundation | `Implemented` | 2026-03-08 | Phase 1 complete and deployed. Phase 2 (autopilot, real integrations) in backlog. |
 | [PRD-002](./PRD-002-autopilot-mode.md) | Autopilot Mode & Agent Autonomy | `Implemented` | 2026-03-08 | Tiered autopilot, guardrail evaluation, trust score, pending action approval — deployed |
 | [PRD-003](./PRD-003-smart-bill-pay.md) | Smart Bill Pay Timing | `Implemented` | 2026-03-08 | Scheduling algo, grace periods, yield savings estimate, smart pay UI — deployed |
-| [PRD-004](./PRD-004-approval-undo-framework.md) | Action Approval & Undo Framework | `In Review` | 2026-03-08 | P0 — Action state machine; undo windows; step-up auth; audit trail |
+| [PRD-004](./PRD-004-approval-undo-framework.md) | Action Approval & Undo Framework | `Implemented` | 2026-03-09 | Approve/reject/pending HTTP routes; undo countdown; pending action UI. Step-up auth deferred (P1). |
 | [PRD-005](./PRD-005-real-account-linking.md) | Real Account Linking | `In Review` | 2026-03-08 | P0 — Plaid integration; webhook sync; connection health; data governance |
-| [PRD-006](./PRD-006-notifications-alerts.md) | Push Notifications & Alerts | `In Review` | 2026-03-08 | P0 — Web push + email; taxonomy; smart timing; anti-fatigue rules |
-| [PRD-007](./PRD-007-proactive-insights.md) | Proactive Agent Insights | `In Review` | 2026-03-08 | P0 — Hybrid detection+Claude pipeline; insight catalog; relevance scoring |
+| [PRD-006](./PRD-006-notifications-alerts.md) | Push Notifications & Alerts | `Implemented` | 2026-03-09 | In-app feed, anti-fatigue rules (3/day cap + 7-day dedup), service worker scaffolding deployed. VAPID push + email deferred pending credentials. |
+| [PRD-007](./PRD-007-proactive-insights.md) | Proactive Agent Insights | `Implemented` | 2026-03-09 | Detection pipeline, scoring, routes, InsightsPage — deployed. |
 | [PRD-008](./PRD-008-bill-negotiation.md) | Bill Negotiation Agent | `Draft` | 2026-03-08 | P1 — Automated bill negotiation for lower rates |
 | [PRD-009](./PRD-009-subscription-cancellation.md) | Subscription Cancellation Agent | `Draft` | 2026-03-08 | P1 — Agent handles full cancellation flow |
 | [PRD-010](./PRD-010-yield-optimization.md) | Yield Optimization Engine | `Draft` | 2026-03-08 | P1 — Auto-allocate idle cash to yield-bearing positions |
@@ -61,9 +61,9 @@ All product requirements documents tracked here. Update status as PRDs move thro
 | [PRD-040](./PRD-040-developer-api.md) | Developer API & Webhooks | `Draft` | 2026-03-08 | P3 — Open API for third-party integrations |
 | [PRD-041](./PRD-041-annual-report.md) | Annual Financial Report | `Draft` | 2026-03-08 | P3 — Spotify Wrapped-style year-end financial summary |
 | [PRD-042](./PRD-042-dashboard-home-experience.md) | Dashboard & Home Experience | `Implemented` | 2026-03-08 | Full dashboard: balance bar, action queue, autopilot card, bills, yield, activity — deployed |
-| [PRD-043](./PRD-043-first-run-demo-mode.md) | First-Run Experience & Demo Mode | `In Review` | 2026-03-08 | P0 — Guided onboarding; rich demo persona ("Alex"); real→demo toggle |
-| [PRD-044](./PRD-044-settings-configuration-hub.md) | Settings & Configuration Hub | `In Review` | 2026-03-08 | P0 — Cohesive home for autopilot, accounts, notifications, profile, intelligence |
-| [PRD-045](./PRD-045-bill-payment-execution.md) | Bill Payment Execution & Money Movement | `In Review` | 2026-03-08 | P0 — Simulated (Phase 1) and real ACH (Phase 2) payment lifecycle |
+| [PRD-043](./PRD-043-first-run-demo-mode.md) | First-Run Experience & Demo Mode | `Implemented` | 2026-03-09 | 5-step onboarding, demo persona (Alex), demo middleware, demo banner — deployed. |
+| [PRD-044](./PRD-044-settings-configuration-hub.md) | Settings & Configuration Hub | `Implemented` | 2026-03-09 | 6-section settings hub with deep linking, notification prefs, autopilot, profile — deployed. |
+| [PRD-045](./PRD-045-bill-payment-execution.md) | Bill Payment Execution & Money Movement | `Implemented` | 2026-03-09 | Phase 1 simulation: payments table, idempotency, state machine (initiated→clearing→settled), cancel endpoint, payment history UI — deployed. Real ACH (Phase 2) deferred. |
 
 ---
 

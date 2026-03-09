@@ -213,7 +213,14 @@ type Props = {
 
 export default function Layout({ children }: Props) {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const isDemo = localStorage.getItem("orbit_demo") === "true";
+
+  function handleSignOut() {
+    localStorage.removeItem("orbit_demo");
+    logout();
+    void navigate({ to: "/login" });
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -229,7 +236,7 @@ export default function Layout({ children }: Props) {
         <div className="flex items-center gap-1">
           <NotificationBell />
           <button
-            onClick={logout}
+            onClick={handleSignOut}
             className="text-sm text-gray-500 hover:text-gray-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100"
           >
             Sign out

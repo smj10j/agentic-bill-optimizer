@@ -248,7 +248,7 @@ export default function OnboardingPage() {
   async function startDemo() {
     setDemoLoading(true);
     try {
-      const res = await apiFetch<{ user: User & { name?: string }; accessToken: string; refreshToken: string; demo: boolean }>("/api/v1/auth/demo", { method: "POST" });
+      const res = await apiFetch<{ user: User & { name?: string }; accessToken: string; refreshToken: string; demo: boolean }>("/auth/demo", { method: "POST" });
       if (res.error) return;
       const { user, accessToken, refreshToken } = res.data;
       login({ accessToken, refreshToken }, user);

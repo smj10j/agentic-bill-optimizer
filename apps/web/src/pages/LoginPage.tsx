@@ -18,7 +18,7 @@ export default function LoginPage() {
   async function handleDemo() {
     setDemoLoading(true);
     try {
-      const res = await apiFetch<DemoResponse>("/api/v1/auth/demo", { method: "POST" });
+      const res = await apiFetch<DemoResponse>("/auth/demo", { method: "POST" });
       if (res.error) { setError(res.error.message); return; }
       const { user, accessToken, refreshToken } = res.data;
       login({ accessToken, refreshToken }, user);

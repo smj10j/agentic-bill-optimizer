@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getActions, undoAction, type AgentActionRecord } from "../lib/actions.js";
+import { getActions, undoAction, approveAction, rejectAction, type AgentActionRecord } from "../lib/actions.js";
 
 function riskColor(level: string) {
   if (level === "high") return "text-red-600 bg-red-50";
@@ -25,7 +25,6 @@ function UndoCountdown({ seconds, onUndo }: { seconds: number; onUndo: () => voi
   }, []);
 
   if (remaining <= 0) return null;
-
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
   const label = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
@@ -38,6 +37,67 @@ function UndoCountdown({ seconds, onUndo }: { seconds: number; onUndo: () => voi
       <span>↩ Undo</span>
       <span className="text-xs opacity-75">({label})</span>
     </button>
+  );
+}
+
+function PendingActionCard({ action, onResolved }: { action: AgentActionRecord; onResolved: () => void }) {
+  const [loading, setLoading] = useState<"approve" | "reject" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handle(decision: "approve" | "reject") {
+    setLoading(decision);
+    setError(null);
+    try {
+      if (decision === "approve") await approveAction(action.id);
+      else await rejectAction(action.id);
+      onResolved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center shrink-0 mt-0.5">
+          <span className="text-yellow-700 text-sm">⏳</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900">{action.description}</p>
+          {action.amountCents > 0 && (
+            <p className="text-sm text-gray-700 mt-0.5">${(action.amountCents / 100).toFixed(2)}</p>
+          )}
+          {action.reasoning && (
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed">{action.reasoning}</p>
+          )}
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${riskColor(action.riskLevel)}`}>
+              {action.riskLevel} risk
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={() => void handle("approve")}
+          disabled={loading !== null}
+          className="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          {loading === "approve" ? "Approving…" : "Approve"}
+        </button>
+        <button
+          onClick={() => void handle("reject")}
+          disabled={loading !== null}
+          className="flex-1 py-2 rounded-lg bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          {loading === "reject" ? "Rejecting…" : "Reject"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -90,7 +150,7 @@ function ActionCard({ action, onUndone }: { action: AgentActionRecord; onUndone:
 
       {action.canUndo && !undoing && (
         <div className="mt-3 pt-3 border-t border-gray-100">
-          <UndoCountdown seconds={action.undoSecondsRemaining} onUndo={handleUndo} />
+          <UndoCountdown seconds={action.undoSecondsRemaining} onUndo={() => void handleUndo()} />
         </div>
       )}
       {undoing && (
@@ -118,18 +178,27 @@ export default function ActionHistoryPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const pendingCount = actions?.filter((a) => a.approvalStatus === "pending").length ?? 0;
+  // Poll every 5s if there are pending actions
+  useEffect(() => {
+    const hasPending = actions?.some((a) => a.approvalStatus === "pending") ?? false;
+    if (!hasPending) return;
+    const interval = setInterval(() => { void load(); }, 5000);
+    return () => clearInterval(interval);
+  }, [actions, load]);
+
+  const pending = actions?.filter((a) => a.approvalStatus === "pending") ?? [];
+  const history = actions?.filter((a) => a.approvalStatus !== "pending") ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Action History</h1>
           <p className="text-sm text-gray-500">Everything Orbit has done on your behalf</p>
         </div>
-        {pendingCount > 0 && (
+        {pending.length > 0 && (
           <span className="px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
-            {pendingCount} pending
+            {pending.length} pending
           </span>
         )}
       </div>
@@ -137,7 +206,7 @@ export default function ActionHistoryPage() {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
           <p className="text-sm text-red-700">{error}</p>
-          <button onClick={load} className="text-sm text-red-700 underline">Retry</button>
+          <button onClick={() => void load()} className="text-sm text-red-700 underline">Retry</button>
         </div>
       )}
 
@@ -152,16 +221,32 @@ export default function ActionHistoryPage() {
         </div>
       )}
 
-      {actions !== null && actions.length === 0 && (
+      {/* Pending approvals — shown first, prominently */}
+      {pending.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-yellow-700 uppercase tracking-wide">
+            Needs your approval
+          </h2>
+          {pending.map((action) => (
+            <PendingActionCard key={action.id} action={action} onResolved={() => void load()} />
+          ))}
+        </div>
+      )}
+
+      {/* Historical actions */}
+      {actions !== null && history.length === 0 && pending.length === 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
           <p className="text-gray-400 text-sm">No actions yet. Orbit will log everything it does here.</p>
         </div>
       )}
 
-      {actions !== null && actions.length > 0 && (
+      {history.length > 0 && (
         <div className="space-y-3">
-          {actions.map((action) => (
-            <ActionCard key={action.id} action={action} onUndone={load} />
+          {pending.length > 0 && (
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">History</h2>
+          )}
+          {history.map((action) => (
+            <ActionCard key={action.id} action={action} onUndone={() => void load()} />
           ))}
         </div>
       )}

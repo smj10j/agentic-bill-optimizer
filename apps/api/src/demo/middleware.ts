@@ -87,6 +87,20 @@ function getDemoResponse(method: string, path: string): unknown | null {
   if (method === "GET" && matchPath("/api/v1/actions", p)) {
     return ok([]);
   }
+  if (method === "GET" && matchPath("/api/v1/actions/pending", p)) {
+    return ok([]);
+  }
+  if (method === "POST" && matchPath("/api/v1/actions/:id/approve", p)) {
+    return ok({ approved: true });
+  }
+  if (method === "POST" && matchPath("/api/v1/actions/:id/reject", p)) {
+    return ok({ rejected: true });
+  }
+
+  // Payments
+  if (method === "GET" && matchPath("/api/v1/payments", p)) {
+    return ok([]);
+  }
 
   // Insights
   if (method === "GET" && matchPath("/api/v1/insights", p)) {

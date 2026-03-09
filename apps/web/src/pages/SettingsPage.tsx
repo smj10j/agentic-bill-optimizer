@@ -297,8 +297,15 @@ function NotificationsSection() {
 
 function ProfileSection() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  function handleSignOut() {
+    localStorage.removeItem("orbit_demo");
+    logout();
+    void navigate({ to: "/login" });
+  }
 
   useEffect(() => { getProfile().then(setProfile).catch(() => {}); }, []);
 
@@ -336,7 +343,7 @@ function ProfileSection() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        <button onClick={logout} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+        <button onClick={handleSignOut} className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
           <p className="text-sm font-medium text-gray-900">Sign out</p>
           <span className="text-gray-400">›</span>
         </button>

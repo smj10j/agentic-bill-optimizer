@@ -172,6 +172,83 @@ Current implementation tasks, updated as work progresses.
 
 ---
 
+## Sprint 3: PRD-007 / PRD-043 / PRD-044 ✅ COMPLETE
+
+- [x] PRD-007 Proactive Agent Insights: detection pipeline, scoring, routes, InsightsPage
+- [x] PRD-043 First-Run & Demo Mode: 5-step onboarding, demo persona (Alex), demo middleware
+- [x] PRD-044 Settings Hub: autopilot, accounts, notifications, profile, intelligence sections
+
+---
+
+## Sprint 4: Remaining P0 PRDs — IN PROGRESS
+
+### PRD-004: Action Approval & Undo Framework ✅ COMPLETE
+
+#### Backend
+- [x] `POST /actions/:id/approve` — HTTP route
+- [x] `POST /actions/:id/reject` — HTTP route
+- [x] `GET /actions/pending` — HTTP route
+- [x] Demo middleware intercepts for pending/approve/reject
+
+#### Frontend
+- [x] `pages/ActionHistoryPage.tsx` — pending actions section with Approve/Reject buttons + polling
+- [x] `approveAction()`, `rejectAction()`, `getPendingActions()` in `lib/actions.ts`
+- [x] Undo countdown timer
+
+---
+
+### PRD-045: Bill Payment Execution (Phase 1 — Simulation) ✅ COMPLETE
+
+#### DB / Migration
+- [x] `0007_payments.sql` — payments table
+- [x] Apply migration local + remote D1
+
+#### Backend — Service
+- [x] `services/payment-sim.ts` — `advancePaymentStatus()` with timed transitions + 5% failure rate
+- [x] `finance.ts`: createPayment, getPayments, getPaymentByIdempotencyKey, updatePaymentStatus, cancelPayment
+- [x] `services/notifications.ts`: notifyPaymentFailed()
+
+#### Backend — Route
+- [x] Updated `POST /bills/:id/pay` — idempotency key, creates payment record
+- [x] `GET /payments` — list payments with sim advancement
+- [x] `POST /payments/:id/cancel`
+- [x] Registered in index.ts + demo middleware
+
+#### Frontend
+- [x] `lib/payments.ts`
+- [x] `pages/ActionHistoryPage.tsx` — pending action cards with approve/reject
+
+#### Tests
+- [x] 6 payment-sim unit tests
+
+---
+
+### PRD-006: Push Notifications & Alerts ✅ COMPLETE (Phase 1)
+
+#### Backend
+- [x] Anti-fatigue rules: 7-day dedup on type + max 3 non-critical/day
+- [x] `notifyPaymentFailed()` helper (bypasses anti-fatigue, critical priority)
+
+#### Frontend
+- [x] `public/sw.js` — service worker for push events
+- [x] Register service worker in `main.tsx`
+- [ ] VAPID web push send — deferred pending VAPID keys
+- [ ] Email (Resend) — deferred pending API key
+
+---
+
+### PRD-005: Real Account Linking
+- [ ] **Deferred** — requires Plaid API credentials. Stubs + UI already in place.
+
+---
+
+### Registry + Docs ✅
+- [x] Update REGISTRY.md: PRD-007, PRD-043, PRD-044, PRD-004, PRD-045, PRD-006 → Implemented
+- [ ] Update API.md with new endpoints
+- [x] Commit + push
+
+---
+
 ## Sprint 2: Backlog
 
 ### Auth & UX

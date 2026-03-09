@@ -52,4 +52,36 @@ router.post("/:id/undo", async (c) => {
   return c.json(ok({ reversed: true }));
 });
 
+// ── GET /pending ───────────────────────────────────────────────────────────────
+
+router.get("/pending", async (c) => {
+  const userId = c.get("userId");
+  const actions = await financeService.getPendingActions(c.env.DB, userId);
+  return c.json(ok(actions));
+});
+
+// ── POST /:id/approve ──────────────────────────────────────────────────────────
+
+router.post("/:id/approve", async (c) => {
+  const userId = c.get("userId");
+  const id = c.req.param("id");
+  const approved = await financeService.approveAction(c.env.DB, id, userId);
+  if (!approved) {
+    return c.json(err("UNPROCESSABLE", "Action not found or cannot be approved"), 422);
+  }
+  return c.json(ok({ approved: true }));
+});
+
+// ── POST /:id/reject ───────────────────────────────────────────────────────────
+
+router.post("/:id/reject", async (c) => {
+  const userId = c.get("userId");
+  const id = c.req.param("id");
+  const rejected = await financeService.rejectAction(c.env.DB, id, userId);
+  if (!rejected) {
+    return c.json(err("UNPROCESSABLE", "Action not found or cannot be rejected"), 422);
+  }
+  return c.json(ok({ rejected: true }));
+});
+
 export { router as actionsRouter };

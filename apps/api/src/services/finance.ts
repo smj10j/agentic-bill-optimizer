@@ -691,3 +691,120 @@ function toYieldPosition(r: DbYield) {
     updatedAt: r.updated_at,
   };
 }
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+
+export type PaymentRecord = {
+  id: string;
+  userId: string;
+  billId: string | null;
+  billerName: string;
+  amountCents: number;
+  status: "initiated" | "clearing" | "settled" | "failed" | "cancelled";
+  idempotencyKey: string;
+  fromAccountId: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  initiatedAt: number;
+  clearedAt: number | null;
+  settledAt: number | null;
+  failedAt: number | null;
+  cancelledAt: number | null;
+  createdAt: number;
+};
+
+type DbPayment = {
+  id: string; user_id: string; bill_id: string | null; biller_name: string;
+  amount_cents: number; status: string; idempotency_key: string;
+  from_account_id: string | null; failure_code: string | null; failure_message: string | null;
+  initiated_at: number; cleared_at: number | null; settled_at: number | null;
+  failed_at: number | null; cancelled_at: number | null; created_at: number;
+};
+
+function toPayment(r: DbPayment): PaymentRecord {
+  return {
+    id: r.id, userId: r.user_id, billId: r.bill_id, billerName: r.biller_name,
+    amountCents: r.amount_cents, status: r.status as PaymentRecord["status"],
+    idempotencyKey: r.idempotency_key, fromAccountId: r.from_account_id,
+    failureCode: r.failure_code, failureMessage: r.failure_message,
+    initiatedAt: r.initiated_at, clearedAt: r.cleared_at, settledAt: r.settled_at,
+    failedAt: r.failed_at, cancelledAt: r.cancelled_at, createdAt: r.created_at,
+  };
+}
+
+export async function createPayment(
+  db: D1Database,
+  data: {
+    userId: string; billId?: string; billerName: string; amountCents: number;
+    idempotencyKey: string; fromAccountId?: string;
+  }
+): Promise<PaymentRecord> {
+  const id = generateId("pay");
+  const now = Math.floor(Date.now() / 1000);
+
+  await db.prepare(
+    `INSERT INTO payments (id, user_id, bill_id, biller_name, amount_cents, status,
+       idempotency_key, from_account_id, initiated_at, created_at)
+     VALUES (?, ?, ?, ?, ?, 'initiated', ?, ?, ?, ?)`
+  ).bind(id, data.userId, data.billId ?? null, data.billerName, data.amountCents,
+    data.idempotencyKey, data.fromAccountId ?? null, now, now).run();
+
+  return {
+    id, userId: data.userId, billId: data.billId ?? null, billerName: data.billerName,
+    amountCents: data.amountCents, status: "initiated", idempotencyKey: data.idempotencyKey,
+    fromAccountId: data.fromAccountId ?? null, failureCode: null, failureMessage: null,
+    initiatedAt: now, clearedAt: null, settledAt: null, failedAt: null, cancelledAt: null,
+    createdAt: now,
+  };
+}
+
+export async function getPayments(db: D1Database, userId: string): Promise<PaymentRecord[]> {
+  const rows = await db.prepare(
+    "SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
+  ).bind(userId).all<DbPayment>();
+  return rows.results.map(toPayment);
+}
+
+export async function getPaymentByIdempotencyKey(
+  db: D1Database, key: string
+): Promise<PaymentRecord | null> {
+  const row = await db.prepare("SELECT * FROM payments WHERE idempotency_key = ?")
+    .bind(key).first<DbPayment>();
+  return row ? toPayment(row) : null;
+}
+
+export async function updatePaymentStatus(
+  db: D1Database,
+  id: string,
+  userId: string,
+  status: PaymentRecord["status"],
+  extra: { failureCode?: string; failureMessage?: string } = {}
+): Promise<boolean> {
+  const now = Math.floor(Date.now() / 1000);
+  let setClause = "status = ?";
+  const binds: (string | number | null)[] = [status];
+
+  if (status === "clearing") { setClause += ", cleared_at = ?"; binds.push(now); }
+  else if (status === "settled") { setClause += ", settled_at = ?"; binds.push(now); }
+  else if (status === "failed") {
+    setClause += ", failed_at = ?"; binds.push(now);
+    if (extra.failureCode) { setClause += ", failure_code = ?"; binds.push(extra.failureCode); }
+    if (extra.failureMessage) { setClause += ", failure_message = ?"; binds.push(extra.failureMessage); }
+  }
+  else if (status === "cancelled") { setClause += ", cancelled_at = ?"; binds.push(now); }
+
+  binds.push(id, userId);
+  const result = await db.prepare(`UPDATE payments SET ${setClause} WHERE id = ? AND user_id = ?`)
+    .bind(...binds).run();
+  return result.meta.changes > 0;
+}
+
+export async function cancelPayment(
+  db: D1Database, id: string, userId: string
+): Promise<boolean> {
+  const row = await db.prepare("SELECT status FROM payments WHERE id = ? AND user_id = ?")
+    .bind(id, userId).first<{ status: string }>();
+  if (!row) return false;
+  if (row.status !== "initiated") return false; // Can only cancel before clearing
+  return updatePaymentStatus(db, id, userId, "cancelled");
+}

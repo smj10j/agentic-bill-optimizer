@@ -19,13 +19,13 @@ export type Profile = {
 };
 
 export async function getNotificationPrefs(): Promise<NotificationPrefs> {
-  const res = await apiFetch<NotificationPrefs>("/api/v1/settings/notifications");
+  const res = await apiFetch<NotificationPrefs>("/settings/notifications");
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
 
 export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>): Promise<NotificationPrefs> {
-  const res = await apiFetch<NotificationPrefs>("/api/v1/settings/notifications", {
+  const res = await apiFetch<NotificationPrefs>("/settings/notifications", {
     method: "PATCH",
     body: patch,
   });
@@ -34,13 +34,13 @@ export async function updateNotificationPrefs(patch: Partial<NotificationPrefs>)
 }
 
 export async function getProfile(): Promise<Profile> {
-  const res = await apiFetch<Profile>("/api/v1/settings/profile");
+  const res = await apiFetch<Profile>("/settings/profile");
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
 
 export async function updateProfile(patch: { email?: string }): Promise<Profile> {
-  const res = await apiFetch<Profile>("/api/v1/settings/profile", { method: "PATCH", body: patch });
+  const res = await apiFetch<Profile>("/settings/profile", { method: "PATCH", body: patch });
   if (res.error) throw new Error(res.error.message);
   return res.data;
 }
