@@ -1,9 +1,10 @@
 // JWT implementation using Web Crypto API (available in Cloudflare Workers)
 
-type JwtPayload = {
+export type JwtPayload = {
   sub: string;
   iat: number;
   exp: number;
+  demo?: boolean;
 };
 
 function base64UrlEncode(data: ArrayBuffer): string {

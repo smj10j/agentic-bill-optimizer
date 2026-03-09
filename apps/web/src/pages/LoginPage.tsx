@@ -4,6 +4,8 @@ import { apiFetch } from "../lib/api";
 import { useAuth } from "../store/auth";
 import type { User } from "@orbit/shared";
 
+type DemoResponse = { user: User; accessToken: string; refreshToken: string; demo: boolean };
+
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -11,6 +13,21 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  async function handleDemo() {
+    setDemoLoading(true);
+    try {
+      const res = await apiFetch<DemoResponse>("/api/v1/auth/demo", { method: "POST" });
+      if (res.error) { setError(res.error.message); return; }
+      const { user, accessToken, refreshToken } = res.data;
+      login({ accessToken, refreshToken }, user);
+      localStorage.setItem("orbit_demo", "true");
+      navigate({ to: "/dashboard" });
+    } finally {
+      setDemoLoading(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -95,12 +112,27 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-600 font-medium hover:underline">
-            Sign up
-          </Link>
-        </p>
+        <div className="mt-4 text-center space-y-3">
+          <p className="text-sm text-gray-500">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-blue-600 font-medium hover:underline">
+              Sign up
+            </Link>
+          </p>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-xs text-gray-400 bg-gray-50 px-3">or</div>
+          </div>
+          <button
+            onClick={handleDemo}
+            disabled={demoLoading}
+            className="w-full py-2.5 rounded-xl border-2 border-dashed border-blue-300 text-blue-600 hover:border-blue-400 hover:bg-blue-50 text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {demoLoading ? "Loading demo..." : "✨ Try Demo — see Orbit in action"}
+          </button>
+        </div>
       </div>
     </div>
   );

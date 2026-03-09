@@ -108,3 +108,24 @@ async function issueTokens(env: Env, userId: string) {
 
   return { accessToken, refreshToken };
 }
+
+// ── POST /demo — issue a demo JWT (no DB writes, no credentials needed) ───────
+
+const DEMO_USER_ID = "demo_alex";
+const DEMO_TOKEN_TTL_SECONDS = 8 * 60 * 60; // 8 hours
+
+authRouter.post("/demo", async (c) => {
+  const accessToken = await signToken(
+    { sub: DEMO_USER_ID, demo: true },
+    c.env.JWT_SECRET,
+    DEMO_TOKEN_TTL_SECONDS
+  );
+  return c.json(
+    ok({
+      user: { id: DEMO_USER_ID, email: "alex@example.com", name: "Alex Johnson" },
+      accessToken,
+      refreshToken: "demo-no-refresh",
+      demo: true,
+    })
+  );
+});

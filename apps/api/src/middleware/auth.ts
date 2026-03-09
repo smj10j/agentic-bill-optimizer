@@ -5,6 +5,7 @@ import type { Env } from "../types/env.js";
 
 export type AuthVariables = {
   userId: string;
+  isDemo: boolean;
 };
 
 export async function authMiddleware(
@@ -23,5 +24,6 @@ export async function authMiddleware(
   }
 
   c.set("userId", payload.sub);
+  c.set("isDemo", payload.demo === true);
   await next();
 }

@@ -18,6 +18,9 @@ import YieldPage from "./pages/YieldPage";
 import AutopilotPage from "./pages/AutopilotPage";
 import ActionHistoryPage from "./pages/ActionHistoryPage";
 import AccountsPage from "./pages/AccountsPage";
+import InsightsPage from "./pages/InsightsPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import SettingsPage from "./pages/SettingsPage";
 
 // ─── Root route ──────────────────────────────────────────────────────────────
 
@@ -41,6 +44,12 @@ const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signup",
   component: SignupPage,
+});
+
+const onboardingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/onboarding",
+  component: OnboardingPage,
 });
 
 // ─── Protected layout route ───────────────────────────────────────────────────
@@ -132,12 +141,25 @@ const accountsRoute = createRoute({
   component: AccountsPage,
 });
 
+const insightsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/insights",
+  component: InsightsPage,
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/settings",
+  component: SettingsPage,
+});
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   signupRoute,
+  onboardingRoute,
   protectedRoute.addChildren([
     dashboardRoute,
     agentRoute,
@@ -147,6 +169,8 @@ const routeTree = rootRoute.addChildren([
     autopilotRoute,
     historyRoute,
     accountsRoute,
+    insightsRoute,
+    settingsRoute,
   ]),
 ]);
 

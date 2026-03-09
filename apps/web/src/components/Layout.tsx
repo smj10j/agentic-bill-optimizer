@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../store/auth";
 import { getNotifications, markAllRead, dismissNotification, markRead, type Notification } from "../lib/notifications.js";
 
@@ -12,12 +12,14 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: "🏠" },
   { to: "/agent", label: "Agent", icon: "🤖" },
+  { to: "/insights", label: "Insights", icon: "💡" },
   { to: "/bills", label: "Bills", icon: "📋" },
   { to: "/subscriptions", label: "Subscriptions", icon: "🔄" },
   { to: "/yield", label: "Yield", icon: "📈" },
   { to: "/autopilot", label: "Autopilot", icon: "✈️" },
   { to: "/history", label: "History", icon: "📜" },
   { to: "/accounts", label: "Accounts", icon: "🏦" },
+  { to: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
@@ -185,15 +187,37 @@ function NotificationBell() {
   );
 }
 
+function DemoBanner() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  function exitDemo() {
+    localStorage.removeItem("orbit_demo");
+    logout();
+    void navigate({ to: "/login" });
+  }
+
+  return (
+    <div className="bg-amber-500 text-white px-4 py-2 flex items-center justify-between text-sm">
+      <span className="font-medium">Demo Mode — Alex's finances</span>
+      <button onClick={exitDemo} className="text-amber-100 hover:text-white underline text-xs">
+        Connect my real accounts →
+      </button>
+    </div>
+  );
+}
+
 type Props = {
   children: React.ReactNode;
 };
 
 export default function Layout({ children }: Props) {
   const { logout } = useAuth();
+  const isDemo = localStorage.getItem("orbit_demo") === "true";
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {isDemo && <DemoBanner />}
       {/* Top header */}
       <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-30">
         <div className="flex items-center gap-2">

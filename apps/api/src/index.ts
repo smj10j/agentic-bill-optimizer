@@ -14,6 +14,9 @@ import { autopilotRouter } from "./routes/autopilot.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { actionsRouter } from "./routes/actions.js";
 import { notificationsRouter } from "./routes/notifications.js";
+import { insightsRouter } from "./routes/insights.js";
+import { settingsRouter } from "./routes/settings.js";
+import { demoMiddleware } from "./demo/middleware.js";
 import type { Env } from "./types/env.js";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -43,6 +46,10 @@ app.use("*", async (c, next) => {
   c.header("Referrer-Policy", "strict-origin-when-cross-origin");
 });
 
+// ── Demo mode interceptor (before all routes) ─────────────────────────────────
+
+app.use("*", demoMiddleware);
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.route("/health", healthRouter);
@@ -57,6 +64,8 @@ app.route("/api/v1/autopilot", autopilotRouter);
 app.route("/api/v1/dashboard", dashboardRouter);
 app.route("/api/v1/actions", actionsRouter);
 app.route("/api/v1/notifications", notificationsRouter);
+app.route("/api/v1/insights", insightsRouter);
+app.route("/api/v1/settings", settingsRouter);
 
 // ── Fallbacks ─────────────────────────────────────────────────────────────────
 

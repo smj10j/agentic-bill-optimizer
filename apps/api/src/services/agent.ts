@@ -110,7 +110,8 @@ export async function* streamAgentResponse(
   db: D1Database,
   userId: string,
   userMessage: string,
-  history: ConversationMessage[]
+  history: ConversationMessage[],
+  demoContext?: string
 ): AsyncGenerator<string> {
   const client = new Anthropic({ apiKey: anthropicKey });
 
@@ -119,13 +120,17 @@ export async function* streamAgentResponse(
     { role: "user", content: userMessage },
   ];
 
+  const systemPrompt = demoContext
+    ? `${SYSTEM_PROMPT}\n\n${demoContext}`
+    : SYSTEM_PROMPT;
+
   let continueLoop = true;
 
   while (continueLoop) {
     const stream = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       tools: TOOLS,
       messages,
       stream: true,

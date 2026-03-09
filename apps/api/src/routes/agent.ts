@@ -7,11 +7,13 @@ import { authMiddleware } from "../middleware/auth.js";
 import { ok, err } from "../lib/response.js";
 import * as financeService from "../services/finance.js";
 import { streamAgentResponse } from "../services/agent.js";
+import { DEMO_AGENT_CONTEXT } from "../demo/fixture.js";
 
 type Variables = AuthVariables;
 const router = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 router.use("*", authMiddleware);
+
 
 router.post(
   "/chat",
@@ -40,12 +42,14 @@ router.post(
     const writer = writable.getWriter();
     const encoder = new TextEncoder();
 
+    const isDemo = c.get("isDemo");
     const stream = streamAgentResponse(
       c.env.ANTHROPIC_API_KEY,
       c.env.DB,
       userId,
       message,
-      history
+      history,
+      isDemo ? DEMO_AGENT_CONTEXT : undefined
     );
 
     // Collect the full assistant response to persist
