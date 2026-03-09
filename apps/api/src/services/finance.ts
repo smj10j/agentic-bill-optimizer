@@ -35,7 +35,7 @@ export async function insertAccount(db: D1Database, account: Omit<Account, "id">
          (id, user_id, name, institution, account_type, balance_cents, currency,
           last_synced_at, created_at, plaid_item_id, plaid_account_id, connection_status, linked_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(plaid_account_id) DO UPDATE SET
+       ON CONFLICT(plaid_account_id) WHERE plaid_account_id IS NOT NULL DO UPDATE SET
          name = excluded.name,
          balance_cents = excluded.balance_cents,
          last_synced_at = excluded.last_synced_at,
@@ -575,11 +575,20 @@ export async function createPlaidItem(
   await db
     .prepare(
       `INSERT INTO plaid_items (id, user_id, item_id, institution_id, institution_name, status, created_at)
-       VALUES (?, ?, ?, ?, ?, 'healthy', ?)`
+       VALUES (?, ?, ?, ?, ?, 'healthy', ?)
+       ON CONFLICT(item_id) DO UPDATE SET
+         institution_name = excluded.institution_name,
+         status = 'healthy'`
     )
     .bind(id, userId, item.itemId, item.institutionId ?? null, item.institutionName, now)
     .run();
-  return id;
+
+  // Return the canonical id (existing row if it was an update)
+  const row = await db
+    .prepare("SELECT id FROM plaid_items WHERE item_id = ?")
+    .bind(item.itemId)
+    .first<{ id: string }>();
+  return row?.id ?? id;
 }
 
 // ─── Conversations ─────────────────────────────────────────────────────────────

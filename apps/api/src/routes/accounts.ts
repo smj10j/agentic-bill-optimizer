@@ -5,6 +5,7 @@
  * Falls back to mock adapter if PLAID_CLIENT_ID/SECRET are not set.
  */
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Env } from "../types/env.js";
@@ -73,57 +74,62 @@ router.post("/link/exchange", zValidator("json", exchangeSchema), async (c) => {
   if (hasPlaidConfig(c.env)) {
     const plaidEnv = c.env.PLAID_ENV ?? "sandbox";
 
-    // 1. Exchange public token
-    const exchanged = await plaidLib.exchangePublicToken(
-      c.env.PLAID_CLIENT_ID,
-      c.env.PLAID_SECRET,
-      plaidEnv,
-      publicToken
-    );
+    try {
+      // 1. Exchange public token
+      const exchanged = await plaidLib.exchangePublicToken(
+        c.env.PLAID_CLIENT_ID,
+        c.env.PLAID_SECRET,
+        plaidEnv,
+        publicToken
+      );
 
-    // 2. Store access token in KV (encrypted at rest by Cloudflare)
-    await c.env.SESSIONS.put(`plaid_access:${userId}:${exchanged.item_id}`, exchanged.access_token);
+      // 2. Store access token in KV (encrypted at rest by Cloudflare)
+      await c.env.SESSIONS.put(`plaid_access:${userId}:${exchanged.item_id}`, exchanged.access_token);
 
-    // 3. Record plaid_item in DB
-    await financeService.createPlaidItem(c.env.DB, userId, {
-      itemId: exchanged.item_id,
-      institutionId,
-      institutionName,
-    });
+      // 3. Record plaid_item in DB (idempotent — upserts on item_id)
+      await financeService.createPlaidItem(c.env.DB, userId, {
+        itemId: exchanged.item_id,
+        institutionId,
+        institutionName,
+      });
 
-    // 4. Fetch accounts
-    const accountsResp = await plaidLib.getPlaidAccounts(
-      c.env.PLAID_CLIENT_ID,
-      c.env.PLAID_SECRET,
-      plaidEnv,
-      exchanged.access_token
-    );
+      // 4. Fetch accounts
+      const accountsResp = await plaidLib.getPlaidAccounts(
+        c.env.PLAID_CLIENT_ID,
+        c.env.PLAID_SECRET,
+        plaidEnv,
+        exchanged.access_token
+      );
 
-    // 5. Upsert accounts (idempotent via ON CONFLICT on plaid_account_id)
-    const now = Math.floor(Date.now() / 1000);
-    const upserted = await Promise.all(
-      accountsResp.accounts.map((a) =>
-        financeService.insertAccount(c.env.DB, {
-          userId,
-          name: a.official_name ?? a.name,
-          institution: institutionName,
-          accountType: plaidLib.mapAccountType(a.type, a.subtype),
-          balanceCents: plaidLib.balanceCents(a),
-          currency: a.balances.iso_currency_code ?? "USD",
-          lastSyncedAt: now,
-          plaidItemId: exchanged.item_id,
-          plaidAccountId: a.account_id,
-          connectionStatus: "healthy",
-          linkedAt: now,
-          createdAt: now,
-        })
-      )
-    );
+      // 5. Upsert accounts (idempotent via ON CONFLICT on plaid_account_id)
+      const now = Math.floor(Date.now() / 1000);
+      const upserted = await Promise.all(
+        accountsResp.accounts.map((a) =>
+          financeService.insertAccount(c.env.DB, {
+            userId,
+            name: a.official_name ?? a.name,
+            institution: institutionName,
+            accountType: plaidLib.mapAccountType(a.type, a.subtype),
+            balanceCents: plaidLib.balanceCents(a),
+            currency: a.balances.iso_currency_code ?? "USD",
+            lastSyncedAt: now,
+            plaidItemId: exchanged.item_id,
+            plaidAccountId: a.account_id,
+            connectionStatus: "healthy",
+            linkedAt: now,
+            createdAt: now,
+          })
+        )
+      );
 
-    // 6. Import transactions in background (don't block response)
-    void syncTransactionsBackground(c.env, userId, exchanged.item_id, exchanged.access_token);
+      // 6. Import transactions in background (don't block response)
+      void syncTransactionsBackground(c.env, userId, exchanged.item_id, exchanged.access_token);
 
-    return c.json(ok({ accountsLinked: upserted.length, accounts: upserted }), 201);
+      return c.json(ok({ accountsLinked: upserted.length, accounts: upserted }), 201);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Account linking failed";
+      throw new HTTPException(422, { message });
+    }
   }
 
   // ── Mock fallback ──────────────────────────────────────────────────────────
